@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>TURBO WHEEL — Checkout</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;margin:0;background:#f4f6f9}
+  header{background:#1e90ff;color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px}
+  .container{max-width:900px;margin:18px auto;padding:16px}
+  .card{background:#fff;padding:14px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
+  .items{display:grid;gap:12px}
+  .item{display:flex;gap:12px;align-items:center}
+  .img{width:90px;height:90px;object-fit:cover;border-radius:8px}
+  .muted{color:#666}
+  label{display:block;margin-top:8px;font-weight:700}
+  input,select,textarea{width:100%;padding:8px;border-radius:6px;border:1px solid #ddd;margin-top:6px}
+  .btn{display:inline-block;padding:10px 14px;background:#1e90ff;color:#fff;border-radius:8px;text-decoration:none;margin-top:12px;font-weight:700;border:none;cursor:pointer}
+  .btn:disabled{background:#ccc;cursor:not-allowed}
+  .flex{display:flex;gap:12px;align-items:center}
+  .right{margin-left:auto}
+  @media(max-width:700px){ .item{flex-direction:column;align-items:flex-start} .img{width:100%;height:200px} }
+  .loading{display:none;margin:10px 0;color:#666}
+  .error{color:#ff4444;margin-top:10px}
+  .success{color:#00aa00;margin-top:10px;font-weight:bold}
+  .whatsapp-field{margin-top:15px;padding:10px;background:#f8fff8;border-left:4px solid #25D366;border-radius:4px}
+  .payment-note{background:#fff3cd;color:#856404;padding:8px;border-radius:5px;margin-top:5px;font-size:13px;border-left:4px solid #ffc107}
+  .info-box{background:#e7f3ff;padding:10px;border-radius:5px;margin-bottom:15px;border-left:4px solid #1e90ff;}
+</style>
+</head>
+
+<body>
+
+<header><div style="font-weight:700">TURBO WHEELS</div></header>
+
+<div class="container">
+  <h1>Checkout</h1>
+
+  <div class="card">
+    <h3>Order Summary</h3>
+    <div id="itemsArea" class="items"></div>
+
+    <div style="margin-top:12px" class="flex">
+      <div class="muted">Subtotal: ₹ <span id="subTotal">0</span></div>
+      <div class="right muted">Delivery: ₹ <span id="deliveryCharge">0</span></div>
+    </div>
+    <div style="margin-top:8px;font-weight:700">Total: ₹ <span id="totalAmt">0</span></div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <h3>Delivery Details</h3>
+    
+    <div style="margin-top:10px">
+      <div class="info-box">
+        <strong>Delivery Information:</strong><br>
+        • Delivery charge: ₹50<br>
+        • Only Cash on Delivery (COD) available<br>
+        • We ship via India Post
+      </div>
+
+      <label>Delivery Address</label>
+      <input id="addrName" placeholder="Full Name" required/>
+      <input id="addrPhone" placeholder="Phone Number" required/>
+      <input id="addrPincode" placeholder="Pincode" required/>
+      <input id="addrCity" placeholder="City/Town" required/>
+      <textarea id="addrText" placeholder="Street / Landmark / House no. / Area" required rows="3"></textarea>
+
+      <div class="payment-note">
+        💰 <strong>Cash on Delivery (COD) only:</strong><br>
+        • Pay cash when your order arrives<br>
+        • India Post will collect the payment at your doorstep<br>
+        • Please keep exact change ready
+      </div>
+    </div>
+
+    <!-- WhatsApp Notification Field -->
+    <div class="whatsapp-field">
+      <label>📱 WhatsApp Number for Order Updates</label>
+      <input type="tel" id="whatsappNumber" placeholder="e.g., 9876543210" required/>
+      <small class="muted">We'll send order confirmation and updates to this WhatsApp number</small>
+    </div>
+
+    <div style="margin-top:12px">
+      <label>Special Instructions</label>
+      <textarea id="orderNotes" placeholder="Any special requests or notes..." rows="3"></textarea>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loading" class="loading">
+      <div>🔄 Processing your order...</div>
+      <small>Creating order and sending confirmations...</small>
+    </div>
+
+    <!-- Messages -->
+    <div id="errorMsg" class="error"></div>
+    <div id="successMsg" class="success"></div>
+
+    <div style="margin-top:12px">
+      <button id="placeOrderBtn" class="btn">Place Order & Get WhatsApp Confirmation</button>
+      <a href="cart.html" class="btn" style="background:#666">Back to Cart</a>
+    </div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script>
+// API Base URL - Fixed: Use the same port as server.js (5000)
+const API_BASE_URL = window.location.origin + '/api'; // This will automatically use the current domain and port
+
+/* Read buyNow item sent from cart */
+function getBuyNow(){
+  const raw = localStorage.getItem('buyNow');
+  if (!raw) return [];
+  try { 
+    const parsed = JSON.parse(raw);
+    console.log('📦 Parsed buyNow items:', parsed);
+    return parsed; 
+  } catch { 
+    console.error('Error parsing buyNow');
+    return []; 
+  }
+}
+
+let items = getBuyNow();
+
+/* fallback to whole cart only if no buyNow */
+if (items.length === 0){
+  console.log('📦 No buyNow items, checking cart...');
+  const cartRaw = localStorage.getItem('cart') || '[]';
+  try {
+    items = JSON.parse(cartRaw);
+    console.log('🛒 Loaded cart items:', items.length);
+  } catch (e) {
+    console.error('Error parsing cart:', e);
+    items = [];
+  }
+}
+
+// If no items, show error and redirect
+if (items.length === 0) {
+  console.log('⚠️ No items found. Redirecting to cart.');
+  alert('No items found. Please add items to cart first.');
+  window.location.href = 'cart.html';
+}
+
+/* Show items */
+function renderItems(){
+  const area = document.getElementById('itemsArea');
+  area.innerHTML = '';
+  let subtotal = 0;
+
+  if (items.length === 0) {
+    area.innerHTML = '<div class="muted">No items in cart. Please add items first.</div>';
+    document.getElementById('subTotal').textContent = '0';
+    document.getElementById('totalAmt').textContent = '0';
+    return;
+  }
+
+  items.forEach(it => {
+    const div = document.createElement('div');
+    div.className = 'item';
+    
+    const itemPrice = parseFloat(it.priceEach || it.price || 0);
+    const itemQty = parseInt(it.qty || 1);
+    const itemTotal = itemPrice * itemQty;
+    subtotal += itemTotal;
+
+    div.innerHTML = `
+      <img class="img" src="${(it.images && it.images[0]) || it.image || 'photo/placeholder.jpg'}" 
+           alt="${it.name || 'Product'}" onerror="this.src='photo/placeholder.jpg'"/>
+      <div>
+        <div style="font-weight:700">${it.name || 'Unnamed Item'}</div>
+        <div class="muted">${it.size || ''} • ${it.type || 'Item'}</div>
+        <div>Qty: ${itemQty} • ₹${itemPrice} each</div>
+        <div style="margin-top:6px">Total: ₹${itemTotal}</div>
+      </div>
+    `;
+
+    area.appendChild(div);
+  });
+
+  document.getElementById('subTotal').textContent = subtotal.toFixed(2);
+  updateTotals();
+}
+
+/* Delivery charge update - always ₹50 */
+function updateTotals(){
+  const subtotal = parseFloat(document.getElementById('subTotal').textContent) || 0;
+  const deliveryCharge = 50; // Fixed delivery charge
+
+  document.getElementById('deliveryCharge').textContent = deliveryCharge.toFixed(2);
+  document.getElementById('totalAmt').textContent = (subtotal + deliveryCharge).toFixed(2);
+}
+
+// Auto-fill user data
+function prefillUserData() {
+  const user = Auth.getCurrentUser();
+  if (user) {
+    const whatsappInput = document.getElementById('whatsappNumber');
+    
+    if (user.whatsappNumber && user.whatsappNumber.trim() !== '') {
+      whatsappInput.value = user.whatsappNumber;
+    }
+    
+    if (user.name) {
+      document.getElementById('addrName').value = user.name;
+    }
+    
+    if (user.phone) {
+      document.getElementById('addrPhone').value = user.phone;
+    }
+  }
+}
+
+/* Place Order - Send to Backend API */
+async function placeOrder() {
+  try {
+    console.log('🛒 Starting order placement...');
+    console.log('🌐 API Base URL:', API_BASE_URL);
+    
+    // Check authentication
+    if (!Auth.isLoggedIn()) {
+      alert('Please sign in to place an order.');
+      window.location.href = 'signin.html';
+      return;
+    }
+
+    // Validate items
+    if (!items || items.length === 0) {
+      showError('No items in your cart. Please add items first.');
+      return;
+    }
+
+    const fulfill = "delivery"; // Always delivery now
+    const subtotal = parseFloat(document.getElementById('subTotal').textContent) || 0;
+    const deliveryCharge = 50; // Fixed delivery charge
+    const total = subtotal + deliveryCharge;
+    const notes = document.getElementById('orderNotes').value.trim();
+    const whatsappNumber = document.getElementById('whatsappNumber').value.trim();
+
+    // Validate WhatsApp number
+    if (!whatsappNumber) {
+      showError('Please enter your WhatsApp number for order updates');
+      return;
+    }
+
+    const cleanNumber = whatsappNumber.replace(/\D/g, '');
+    if (cleanNumber.length !== 10) {
+      showError('Please enter a valid 10-digit WhatsApp number');
+      return;
+    }
+
+    // Prepare order items
+    const orderItems = items.map(item => {
+      const priceEach = parseFloat(item.priceEach || item.price || 0);
+      const qty = parseInt(item.qty || 1);
+      const totalPrice = priceEach * qty;
+      
+      return {
+        id: item.id || `ITEM_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        name: item.name || 'Product',
+        type: item.type || 'general',
+        size: item.size || '',
+        frameColor: item.frameColor || '',
+        frameWidth: item.frameWidth || 0,
+        walletName: item.walletName || '',
+        color: item.color || '',
+        symbol: item.symbol || '',
+        image: (item.images && item.images[0]) || item.image || '',
+        price: totalPrice,
+        priceEach: priceEach,
+        qty: qty
+      };
+    });
+
+    console.log('📦 Prepared order items:', orderItems.length);
+
+    let paymentMethod = "cod"; // Always COD now
+    let address = null;
+
+    // Get address details
+    const name = document.getElementById('addrName').value.trim();
+    const phone = document.getElementById('addrPhone').value.trim();
+    const pin = document.getElementById('addrPincode').value.trim();
+    const city = document.getElementById('addrCity').value.trim();
+    const line = document.getElementById('addrText').value.trim();
+
+    if (!name || !phone || !pin || !city || !line) {
+      showError('Please fill complete address for delivery');
+      return;
+    }
+
+    address = {
+      name,
+      phone,
+      pincode: pin,
+      city,
+      street: line
+    };
+
+    // Show loading
+    showLoading(true);
+    clearMessages();
+
+    // Get user info
+    const user = Auth.getCurrentUser();
+    if (!user) {
+      showError('User not authenticated. Please sign in again.');
+      showLoading(false);
+      return;
+    }
+
+    // Prepare API request data
+    const orderData = {
+      userId: user.email,
+      userName: user.name || '',
+      userEmail: user.email,
+      items: orderItems,
+      subtotal: subtotal,
+      deliveryCharge: deliveryCharge,
+      total: total,
+      fulfill: fulfill,
+      paymentMethod: paymentMethod,
+      notes: notes,
+      whatsappNumber: cleanNumber,
+      address: address
+    };
+
+    console.log('📤 Sending order data to backend...', orderData);
+
+    // Get auth token
+    const token = Auth.getToken();
+    if (!token) {
+      showError('Authentication error. Please sign in again.');
+      window.location.href = 'signin.html';
+      showLoading(false);
+      return;
+    }
+
+    // Send to backend API
+    console.log(`📡 Sending request to: ${API_BASE_URL}/orders/create`);
+    
+    const response = await fetch(`${API_BASE_URL}/orders/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(orderData)
+    });
+
+    console.log('📥 Response status:', response.status);
+    
+    const result = await response.json();
+    console.log('📥 Response data:', result);
+    
+    if (!response.ok) {
+      throw new Error(result.error || result.message || `Server error: ${response.status}`);
+    }
+
+    if (result.success) {
+      showSuccess(`✅ Order placed successfully! Order ID: ${result.order.orderId}<br><br>
+                  📱 WhatsApp confirmation sent to ${cleanNumber}<br>
+                  📧 Email confirmation sent to your registered email<br>
+                  Check your orders page for details.`);
+      
+      const orderBtn = document.getElementById('placeOrderBtn');
+      orderBtn.disabled = true;
+      orderBtn.textContent = 'Order Placed ✓';
+      
+      // Clear cart from localStorage
+      clearCartItems();
+      
+      // Redirect to orders page after 3 seconds
+      setTimeout(() => {
+        window.location.href = 'myorders.html';
+      }, 3000);
+      
+    } else {
+      throw new Error(result.error || result.message || 'Order failed');
+    }
+
+  } catch (error) {
+    console.error('❌ Order error:', error);
+    showError(`Failed to place order: ${error.message}<br><br>Please check if the backend server is running on port 5000.`);
+    showLoading(false);
+  }
+}
+
+// Helper functions
+function showLoading(show) {
+  document.getElementById('loading').style.display = show ? 'block' : 'none';
+  document.getElementById('placeOrderBtn').disabled = show;
+}
+
+function showError(message) {
+  document.getElementById('errorMsg').innerHTML = message;
+  document.getElementById('successMsg').innerHTML = '';
+}
+
+function showSuccess(message) {
+  document.getElementById('successMsg').innerHTML = message;
+  document.getElementById('errorMsg').innerHTML = '';
+  showLoading(false);
+}
+
+function clearMessages() {
+  document.getElementById('errorMsg').innerHTML = '';
+  document.getElementById('successMsg').innerHTML = '';
+}
+
+function clearCartItems() {
+  try {
+    const itemIds = items.map(item => item.id).filter(id => id);
+    
+    if (itemIds.length > 0) {
+      let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const initialLength = cart.length;
+      cart = cart.filter(item => !itemIds.includes(item.id));
+      localStorage.setItem('cart', JSON.stringify(cart));
+      console.log(`🧹 Cleared ${initialLength - cart.length} items from cart`);
+    }
+    
+    localStorage.removeItem('buyNow');
+    console.log('🧹 Cart cleared successfully');
+  } catch (error) {
+    console.error('Error clearing cart:', error);
+  }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  if (!Auth.isLoggedIn()) {
+    alert('Please sign in to place an order.');
+    window.location.href = 'signin.html';
+    return;
+  }
+
+  console.log('✅ Page loaded, user authenticated');
+  console.log('🌐 Current origin:', window.location.origin);
+  
+  document.getElementById('placeOrderBtn').addEventListener('click', placeOrder);
+  
+  renderItems();
+  updateTotals();
+  prefillUserData();
+  
+  console.log('✅ Checkout page initialized');
+});
+</script>
+
+</body>
+</html>

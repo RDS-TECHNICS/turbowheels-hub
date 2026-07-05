@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Turbo Wheels | Premium Diecast Cars</title>
+  <script src="auth.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    body {
+      background: #f5f7fc;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #007BFF;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 30px;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .logo {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, #fff, #ffdd99);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: white;
+      text-shadow: 0 2px 3px rgba(0,0,0,0.2);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .header-right a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      transition: 0.2s;
+      font-size: 15px;
+      padding: 4px 0;
+      border-bottom: 2px solid transparent;
+    }
+
+    .header-right a:hover {
+      border-bottom-color: #ffdd99;
+      transform: translateY(-1px);
+    }
+
+    .header-right span {
+      background: rgba(255,255,255,0.2);
+      padding: 5px 12px;
+      border-radius: 40px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    button.logout-btn {
+      background: #ff4d4d;
+      border: none;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 13px;
+      transition: 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    button.logout-btn:hover {
+      background: #e03a3a;
+      transform: scale(0.97);
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #0a0f1f 0%, #1a1f2f 100%);
+      color: white;
+      text-align: center;
+      padding: 70px 20px;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      letter-spacing: 2px;
+      font-weight: 800;
+      text-transform: uppercase;
+      background: linear-gradient(120deg, #fff, #ffbb77);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .about {
+      padding: 50px 30px;
+      text-align: center;
+      background: #eef3ff;
+      margin: 20px 0;
+    }
+
+    .about h2 {
+      font-size: 2rem;
+      color: #004aad;
+      margin-bottom: 15px;
+    }
+
+    .about p {
+      max-width: 800px;
+      margin: 0 auto;
+      font-size: 1.1rem;
+      color: #2c3e66;
+    }
+
+    .products {
+      max-width: 1300px;
+      margin: 40px auto;
+      padding: 0 25px;
+    }
+
+    .products h2 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #0b2b44;
+      text-align: center;
+      margin-bottom: 35px;
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .products h2:after {
+      content: '';
+      display: block;
+      width: 80px;
+      height: 4px;
+      background: #007BFF;
+      margin: 12px auto 0;
+      border-radius: 4px;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 30px;
+      margin-top: 20px;
+    }
+
+    .product {
+      background: white;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.05), 0 4px 8px rgba(0,0,0,0.03);
+      transition: all 0.3s ease;
+      cursor: default;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 20px;
+      border: 1px solid rgba(0,123,255,0.1);
+    }
+
+    .product:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 24px 36px rgba(0,0,0,0.12);
+      border-color: rgba(0,123,255,0.3);
+    }
+
+    .product img {
+      width: 100%;
+      height: 210px;
+      object-fit: contain;
+      background: #fafafc;
+      padding: 15px;
+      transition: transform 0.2s;
+      border-bottom: 1px solid #eee;
+    }
+
+    .product:hover img {
+      transform: scale(1.02);
+    }
+
+    .product p {
+      margin: 12px 16px 4px;
+      font-size: 1rem;
+      color: #1f2a44;
+    }
+
+    .product p:first-of-type {
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: #0b2b44;
+      margin-top: 18px;
+    }
+
+    .product p:nth-of-type(2) {
+      font-weight: 800;
+      color: #007BFF;
+      font-size: 1.25rem;
+    }
+
+    .product p:nth-of-type(3) {
+      font-size: 0.85rem;
+      color: #5a687c;
+      border-top: 1px dashed #e0e7f0;
+      padding-top: 8px;
+      margin-top: 8px;
+    }
+
+    .loading-message {
+      text-align: center;
+      padding: 60px;
+      font-size: 1.2rem;
+      color: #007BFF;
+      background: white;
+      border-radius: 50px;
+      grid-column: 1 / -1;
+    }
+
+    .error-message {
+      text-align: center;
+      padding: 40px;
+      background: #ffefef;
+      color: #cc3333;
+      border-radius: 30px;
+      grid-column: 1 / -1;
+      font-weight: 500;
+    }
+
+    footer {
+      background: #004aad;
+      color: white;
+      text-align: center;
+      padding: 24px 20px;
+      margin-top: 60px;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+    }
+
+    @media (max-width: 650px) {
+      header {
+        flex-direction: column;
+        text-align: center;
+      }
+      .header-right {
+        justify-content: center;
+      }
+      .hero h1 {
+        font-size: 2rem;
+      }
+      .products {
+        padding: 0 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🏁 Turbo Wheels</div>
+  <div id="headerAuth" class="header-right"></div>
+</header>
+
+<section class="hero">
+  <h1>Welcome to Turbo Wheels</h1>
+  <p style="margin-top: 15px; font-size: 1.2rem; opacity: 0.9;">India's finest Hot Wheels & premium diecast collectibles</p>
+</section>
+
+<section class="products">
+  <h2>🔥 Our Products</h2>
+  <div class="product-grid" id="products">
+    <div class="loading-message">🚗 Loading high-octane collection...</div>
+  </div>
+</section>
+
+<section class="about">
+  <h2>About Turbo Wheels</h2>
+  <p>We sell Hot Wheels, Premium diecast cars and collectibles across India. Authentic models, rare editions, and track-ready performance cars delivered to your doorstep. Join our community of collectors!</p>
+</section>
+
+<footer>
+  <p>© 2025 Turbo Wheels — Rev up your collection</p>
+</footer>
+
+<script>
+ const API_BASE = "http://localhost:5000";
+  
+  // STEP 1: Declare products array at the top
+  let products = [];
+
+  async function loadProducts() {
+    const productsContainer = document.getElementById("products");
+    if (!productsContainer) return;
+
+    productsContainer.innerHTML = `<div class="loading-message">🏎️ Revving engines... loading products</div>`;
+
+    try {
+      const response = await fetch(`${API_BASE}/api/products`);
+      
+      if (!response.ok) {
+        throw new Error(`Server responded with status ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // STEP 2: Log the raw data to see what the API returns
+      console.log("Raw API response:", data);
+      
+      // STEP 3: Handle both response formats
+      // If data is an array directly, use it
+      if (Array.isArray(data)) {
+        products = data;
+      } 
+      // If data has a products property that is an array
+      else if (data.products && Array.isArray(data.products)) {
+        products = data.products;
+      } 
+      // If data has a data property that is an array (common in some APIs)
+      else if (data.data && Array.isArray(data.data)) {
+        products = data.data;
+      }
+      // If nothing works, set to empty array
+      else {
+        products = [];
+        console.warn("Unexpected API response format:", data);
+      }
+      
+      // STEP 4: Now log the products array after assignment
+      console.log("Products array:", products);
+      console.log("Is products an array?", Array.isArray(products));
+      
+      if (!Array.isArray(products) || products.length === 0) {
+        productsContainer.innerHTML = `<div class="error-message">✨ No products yet! Check back soon for stunning diecast models. ✨</div>`;
+        return;
+      }
+      
+      let productHTML = "";
+      for (const product of products) {
+        const name = product.name || "Collector Edition";
+        const price = product.price !== undefined && product.price !== null ? product.price : 0;
+        const stock = product.stock !== undefined ? product.stock : "In stock";
+        let imageUrl = product.image && product.image.trim() !== "" ? product.image : "https://via.placeholder.com/300x180?text=Turbo+Wheels";
+        
+        if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:')) {
+          imageUrl = `${API_BASE}${imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl}`;
+        }
+        
+        productHTML += `
+<div class="product">
+    <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(name)}">
+    <p>${escapeHtml(name)}</p>
+    <p>₹${price}</p>
+    <p>📦 Stock: ${product.stock}</p>
+    <input type="number" id="qty-${product.id}" min="1" max="${product.stock}" value="1" style="width:70px;margin:0 16px;padding:6px;border:1px solid #ccc;border-radius:4px;">
+    <button onclick="buyNowWithQty(${product.id})" style="width:90%;margin:8px auto;background:#28a745;color:white;border:none;padding:10px;border-radius:6px;cursor:pointer;">
+        Buy Now
+    </button>
+    <button onclick="addToCartWithQty(${product.id})" style="width:90%;margin:auto;background:#007BFF;color:white;border:none;padding:10px;border-radius:6px;cursor:pointer;">
+        Add To Cart
+    </button>
+</div>
+`;
+      }
+      
+      productsContainer.innerHTML = productHTML;
+      
+    } catch (error) {
+      console.error("Failed to load products:", error);
+      let userMessage = "⚠️ Unable to connect to product server. ";
+      if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
+        userMessage += `Please ensure backend server is running on ${API_BASE}. `;
+        userMessage += "Make sure to start your backend (node server.js or similar) on port 5000. ";
+      } else {
+        userMessage += `Error: ${error.message}. `;
+      }
+      userMessage += "Try refreshing or contact support.";
+      productsContainer.innerHTML = `<div class="error-message">🚨 ${userMessage}</div>`;
+    }
+  }
+  
+  function escapeHtml(str) {
+    if (!str) return "";
+    return String(str).replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+      return c;
+    });
+  }
+
+  let currentUser = null;
+  
+  function getCurrentUserFromAuth() {
+    if (typeof Auth !== 'undefined') {
+      if (Auth.getCurrentUser && typeof Auth.getCurrentUser === 'function') {
+        return Auth.getCurrentUser();
+      }
+      if (Auth.user) return Auth.user;
+      if (Auth.init && typeof Auth.init === 'function') {
+        try {
+          return Auth.init();
+        } catch(e) { return null; }
+      }
+    }
+    
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload && payload.email) {
+          return { email: payload.email, name: payload.name || payload.email };
+        }
+      } catch(e) {}
+    }
+    return null;
+  }
+
+  function addToCartWithQty(productId) {
+    const qtyInput = document.getElementById(`qty-${productId}`);
+    if (!qtyInput) {
+      alert("Quantity input not found");
+      return;
+    }
+    
+    const qty = parseInt(qtyInput.value);
+    if (isNaN(qty) || qty < 1) {
+      alert("Please enter a valid quantity");
+      return;
+    }
+    
+    const product = products.find(p => p.id == productId);
+    if (!product) {
+      alert("Product not found");
+      return;
+    }
+    
+    if (qty > product.stock) {
+      alert(`Not enough stock. Available: ${product.stock}`);
+      return;
+    }
+
+    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    
+    // Check if product already in cart
+    const existingIndex = cart.findIndex(item => item.id == productId);
+    if (existingIndex !== -1) {
+      const newQty = cart[existingIndex].qty + qty;
+      if (newQty > product.stock) {
+        alert(`Not enough stock. Available: ${product.stock}`);
+        return;
+      }
+      cart[existingIndex].qty = newQty;
+    } else {
+      cart.push({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        priceEach: product.price,
+        qty: qty,
+        stock: product.stock,
+        image: product.image
+      });
+    }
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+    window.location.href = "cart.html";
+  }
+
+  function buyNowWithQty(productId) {
+    const qtyInput = document.getElementById(`qty-${productId}`);
+    if (!qtyInput) {
+      alert("Quantity input not found");
+      return;
+    }
+    
+    const qty = parseInt(qtyInput.value);
+    if (isNaN(qty) || qty < 1) {
+      alert("Please enter a valid quantity");
+      return;
+    }
+    
+    const product = products.find(p => p.id == productId);
+    if (!product) {
+      alert("Product not found");
+      return;
+    }
+    
+    if (qty > product.stock) {
+      alert(`Not enough stock. Available: ${product.stock}`);
+      return;
+    }
+
+    localStorage.setItem("buyNow", JSON.stringify([{
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      priceEach: product.price,
+      qty: qty,
+      stock: product.stock,
+      image: product.image
+    }]));
+
+    window.location.href = "buy.html";
+  }
+
+  function updateHeader() {
+    const headerAuth = document.getElementById("headerAuth");
+    if (!headerAuth) return;
+    
+    let user = null;
+    if (typeof Auth !== 'undefined') {
+      try {
+        if (Auth.getCurrentUser) user = Auth.getCurrentUser();
+        else if (Auth.user) user = Auth.user;
+        else if (Auth.init && typeof Auth.init === 'function') user = Auth.init();
+      } catch(e) { console.warn(e); }
+    }
+    if (!user) {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        try {
+          const base64Payload = token.split('.')[1];
+          const payload = JSON.parse(atob(base64Payload));
+          if (payload && payload.email) user = { email: payload.email, name: payload.name };
+        } catch(e) {}
+      }
+    }
+    currentUser = user;
+    
+    if (currentUser && currentUser.email) {
+      const displayName = currentUser.name || currentUser.email.split('@')[0];
+      headerAuth.innerHTML = `
+        <span>🏎️ Hi, ${escapeHtml(displayName)}</span>
+        <a href="profile.html">👤 Profile</a>
+        <a href="myorders.html">📦 Orders</a>
+        <a href="cart.html">🛒 Cart</a>
+        <button class="logout-btn" onclick="performLogout()">🚪 Logout</button>
+      `;
+    } else {
+      headerAuth.innerHTML = `
+        <a href="signin.html">🔑 Login</a>
+        <a href="signup.html">📝 Signup</a>
+        <a href="cart.html">🛒 Cart</a>
+      `;
+    }
+  }
+  
+  window.performLogout = function() {
+    if (typeof Auth !== 'undefined' && Auth.logout && typeof Auth.logout === 'function') {
+      Auth.logout();
+      setTimeout(() => {
+        window.location.href = "index.html";
+      }, 50);
+    } else {
+      if (confirm("Logout from Turbo Wheels?")) {
+        localStorage.removeItem("authToken");
+        sessionStorage.clear();
+        if (typeof window.dispatchEvent === 'function') {
+          window.dispatchEvent(new Event('storage'));
+        }
+        window.location.href = "index.html";
+      }
+    }
+    setTimeout(() => {
+      if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
+        updateHeader();
+        window.location.reload();
+      } else {
+        window.location.href = "index.html";
+      }
+    }, 100);
+  };
+  
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'authToken' || e.key === 'userSession') {
+      updateHeader();
+    }
+  });
+
+  function addToCart(product) {
+    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    product.qty = 1;
+    product.priceEach = product.price;
+    cart.push(product);
+    localStorage.setItem("cart", JSON.stringify(cart));
+    window.location.href = "cart.html";
+  }
+
+  function buyNow(product) {
+    product.qty = 1;
+    product.priceEach = product.price;
+    localStorage.setItem("buyNow", JSON.stringify([product]));
+    window.location.href = "buy.html";
+  }
+
+  function init() {
+    updateHeader();
+    loadProducts();
+    setTimeout(updateHeader, 150);
+    setTimeout(updateHeader, 500);
+  }
+  
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+  
+  console.log(`✅ Turbo Wheels frontend ready — connected to backend on ${API_BASE}`);
+</script>
+
+</body>
+</html>

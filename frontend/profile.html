@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile</title>
+
+<style>
+body{
+    font-family:Arial;
+    text-align:center;
+    background:#f5f5f5;
+}
+.card{
+    background:white;
+    margin:40px;
+    padding:20px;
+    border-radius:10px;
+}
+img{
+    width:80px;
+    border-radius:50%;
+}
+button{
+    padding:10px;
+    margin-top:10px;
+}
+</style>
+</head>
+
+<body onload="loadUser()">
+
+<div class="card">
+    <img id="img">
+    <h3 id="name"></h3>
+    <p id="email"></p>
+    <p id="phone"></p>
+
+    <button onclick="logout()">Logout</button>
+</div>
+
+<script>
+function loadUser(){
+    let user = JSON.parse(localStorage.getItem("user"));
+
+    if(!user){
+        window.location="login.html";
+        return;
+    }
+
+    document.getElementById("img").src = user.photoURL || "https://via.placeholder.com/80";
+    document.getElementById("name").innerText = user.displayName || "User";
+    document.getElementById("email").innerText = user.email || "";
+    document.getElementById("phone").innerText = user.phoneNumber || "";
+}
+
+function logout(){
+    localStorage.removeItem("user");
+    window.location="index.html";
+}
+</script>
+
+</body>
+</html>

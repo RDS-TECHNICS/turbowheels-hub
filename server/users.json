@@ -1,0 +1,56 @@
+[
+  {
+    "email": "habeebcth@gmail.com",
+    "password": "$2b$12$4PTf3C34kZA4QxXniTZ8m.d1YDbVpx1/DkKn65rU7GUohZ.KNcSTO",
+    "name": "habeeb",
+    "phone": "08289967605",
+    "whatsappNumber": "8289967605",
+    "cart": [],
+    "orders": [],
+    "isVerified": true
+  },
+  {
+    "email": "burhanap88@gmail.com",
+    "password": "$2a$12$SsTnNTx40kqvMxAGyFifoOuArV2vNLAMlUHPa2o./Ksnt9VmCyNKm",
+    "name": "rishu",
+    "phone": "9995760278",
+    "whatsappNumber": "9995760278",
+    "cart": [],
+    "orders": [
+      {
+        "orderId": "ORD-1783094391892-6DD77E",
+        "items": [
+          {
+            "id": 1782565989711,
+            "name": "A3 frame",
+            "type": "general",
+            "size": "",
+            "color": "",
+            "frameColor": "",
+            "frameWidth": 0,
+            "price": 667,
+            "priceEach": 667,
+            "qty": 1,
+            "image": "/uploads/1782565989709-WhatsApp Image 2026-06-02 at 10.13.26 PM.jpeg"
+          }
+        ],
+        "total": 717,
+        "status": "Placed",
+        "deliveryDate": null,
+        "progressNotes": "",
+        "createdAt": "2026-07-03T15:59:51.897Z"
+      }
+    ],
+    "isVerified": true
+  },
+  {
+    "email": "turbowheelhub@gmail.com",
+    "password": "$2a$12$2IfSidlikPT7kfSXQxp7du8ewhXvkLL6ph4HcrGeJeAk783Q5cJfW",
+    "name": "dilshad",
+    "phone": "08289967605",
+    "whatsappNumber": "9995760278",
+    "cart": [],
+    "orders": [],
+    "isVerified": true
+  }
+]

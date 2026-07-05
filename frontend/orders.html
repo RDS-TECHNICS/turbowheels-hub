@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<body onload="loadOrders()">
+
+<h2>My Orders</h2>
+<div id="orders"></div>
+
+<script>
+async function loadOrders(){
+    let user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    let res = await fetch("/orders");
+    let data = await res.json();
+
+    let html = "";
+
+    data.forEach(o=>{
+        if(o.phone === user.phoneNumber){
+            html += `<p>${o.product} - ₹${o.price}</p>`;
+        }
+    });
+
+    document.getElementById("orders").innerHTML = html;
+}
+</script>
+
+</body>
+</html>

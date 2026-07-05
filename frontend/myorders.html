@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Orders - Soul Art Studio</title>
+  <script src="auth.js"></script>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f0f4ff;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #1e90ff;
+      margin-bottom: 20px;
+    }
+
+    .user-info {
+      text-align: center;
+      margin-bottom: 20px;
+      padding: 10px;
+      background: #e3f2fd;
+      border-radius: 6px;
+    }
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 8px 16px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .filter-btn.active {
+      background: #1e90ff;
+      color: white;
+      border-color: #1e90ff;
+    }
+
+    .order {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin: 15px 0;
+      border-left: 4px solid #1e90ff;
+      transition: all 0.3s ease;
+    }
+
+    .order.delivered {
+      border-left-color: #28a745;
+      background: #f8fff9;
+    }
+
+    .order.cancelled {
+      border-left-color: #dc3545;
+      background: #fff8f8;
+      opacity: 0.8;
+    }
+
+    .order.hidden {
+      border-left-color: #6c757d;
+      background: #f8f9fa;
+      border: 1px dashed #6c757d;
+    }
+
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .order-id {
+      font-weight: bold;
+      color: #333;
+      font-size: 18px;
+    }
+
+    .order-date {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .order-total {
+      font-size: 18px;
+      font-weight: bold;
+      color: #1e90ff;
+      margin: 10px 0;
+    }
+
+    .status {
+      padding: 5px 12px;
+      display: inline-block;
+      border-radius: 15px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .status-placed { background: #e3f2fd; color: #1976d2; }
+    .status-processing { background: #fff3e0; color: #f57c00; }
+    .status-designing { background: #f3e5f5; color: #7b1fa2; }
+    .status-printing { background: #e8eaf6; color: #283593; }
+    .status-framing { background: #fff8e1; color: #f9a825; }
+    .status-packing { background: #e0f7fa; color: #00838f; }
+    .status-ready-for-pickup { background: #b2dfdb; color: #00695c; }
+    .status-out-for-delivery { background: #b3e5fc; color: #0277bd; }
+    .status-delivered { background: #d4edda; color: #155724; }
+    .status-cancelled { background: #f8d7da; color: #721c24; }
+
+    .order-items {
+      margin: 15px 0;
+    }
+
+    .order-item {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      margin: 5px 0;
+    }
+
+    .item-image {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 6px;
+      margin-right: 15px;
+    }
+
+    .item-details {
+      flex: 1;
+    }
+
+    .item-name {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .item-info {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .delivery-info {
+      background: #f0f8ff;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .delivery-date {
+      color: #28a745;
+      font-weight: bold;
+      background: #e8f5e9;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: 5px;
+    }
+
+    .notes {
+      background: #fff3cd;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+      font-size: 14px;
+      color: #856404;
+    }
+
+    .hidden-badge {
+      display: inline-block;
+      background: #6c757d;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: bold;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .hidden-order-notice {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 15px;
+      color: #6c757d;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+
+    .view-details-btn {
+      background: #1e90ff;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .view-details-btn:hover {
+      background: #0d8bf2;
+    }
+
+    .quick-reorder-btn {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+    }
+
+    .quick-reorder-btn:hover {
+      background: linear-gradient(135deg, #218838 0%, #1aa179 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+    }
+
+    .login-prompt {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .login-btn {
+      background: #1e90ff;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    .login-btn:hover {
+      background: #0d8bf2;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    .error {
+      background: #ffebee;
+      color: #d32f2f;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 10px 0;
+      text-align: center;
+    }
+
+    .no-orders {
+      text-align: center;
+      color: #666;
+      padding: 40px;
+      font-size: 16px;
+    }
+
+    .no-orders h3 {
+      color: #333;
+    }
+
+    .completed-section {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #28a745;
+    }
+
+    .completed-header {
+      background: #e8f5e8;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .completed-header h4 {
+      margin: 0;
+      color: #2e7d32;
+    }
+
+    /* Modal for order details */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: 5% auto;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+    }
+
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .order-details-content {
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+
+    .order-item-detail {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background: white;
+      border-radius: 4px;
+      margin: 5px 0;
+    }
+
+    .order-item-img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin-right: 10px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      margin: 20px 0 10px 0;
+      padding-bottom: 5px;
+      border-bottom: 2px solid #1e90ff;
+    }
+
+    .section-title.completed-title {
+      border-bottom-color: #28a745;
+      color: #2e7d32;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>📦 My Orders</h2>
+    
+    <div id="userInfo" class="user-info"></div>
+    
+    <div id="filters" class="filters" style="display: none;">
+      <button class="filter-btn active" onclick="filterOrders('all')">All Orders</button>
+      <button class="filter-btn" onclick="filterOrders('active')">Active</button>
+      <button class="filter-btn" onclick="filterOrders('delivered')">Delivered</button>
+      <button class="filter-btn" onclick="filterOrders('cancelled')">Cancelled</button>
+    </div>
+    
+    <div id="orderBox">
+      <div class="loading">Loading your orders...</div>
+    </div>
+  </div>
+
+  <!-- Order Details Modal -->
+  <div id="orderDetailsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalOrderTitle">Order Details</h3>
+        <button class="close-modal" onclick="closeOrderDetailsModal()">&times;</button>
+      </div>
+      <div id="modalOrderContent" class="order-details-content">
+        <!-- Order details will appear here -->
+      </div>
+      <div style="margin-top:15px;text-align:center;">
+        <button onclick="closeOrderDetailsModal()" class="view-details-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // API Base URL
+    const API_BASE_URL = window.location.origin + '/api';
+    
+    // Initialize auth
+    const currentUser = Auth.init();
+    let allOrders = [];
+    let allCompletedOrders = [];
+    let filteredOrders = [];
+    
+    async function loadMyOrders() {
+      const orderBox = document.getElementById("orderBox");
+      const userInfo = document.getElementById("userInfo");
+      const filters = document.getElementById("filters");
+      
+      // Check if user is logged in
+      if (!currentUser) {
+        orderBox.innerHTML = `
+          <div class="login-prompt">
+            <h3>Please Login to View Your Orders</h3>
+            <p>You need to be logged in to see your order history.</p>
+            <a href="signin.html" class="login-btn">Login Now</a>
+          </div>
+        `;
+        userInfo.innerHTML = '';
+        filters.style.display = 'none';
+        return;
+      }
+
+      // Display user info
+      userInfo.innerHTML = `
+        Welcome back, <strong>${currentUser.email}</strong>! 
+        <span style="color:#666; font-size:14px;">Loading your orders...</span>
+      `;
+
+      try {
+        // Get auth token
+        const token = Auth.getToken();
+        if (!token) {
+          throw new Error('Authentication error. Please sign in again.');
+        }
+
+        // Fetch orders from the backend (which merges orders.json + completeorder.json)
+        console.log(`📡 Fetching orders from: ${API_BASE_URL}/orders/my-orders`);
+        const response = await fetch(`${API_BASE_URL}/orders/my-orders`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        console.log('📥 Response status:', response.status);
+        
+        if (!response.ok) {
+          let errorMessage = `HTTP ${response.status}`;
+          try {
+            const errorResult = await response.json();
+            errorMessage = errorResult.error || errorResult.message || errorMessage;
+          } catch (e) {
+            // Ignore JSON parse error
+          }
+          throw new Error(errorMessage);
+        }
+
+        const result = await response.json();
+        console.log('📥 Orders received:', result);
+        
+        if (!result.success) {
+          throw new Error(result.error || result.message || 'Failed to fetch orders');
+        }
+
+        // Separate active and completed orders
+        const allOrdersData = result.orders || [];
+        allOrders = allOrdersData.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled');
+        allCompletedOrders = allOrdersData.filter(o => o.status === 'Delivered' || o.status === 'Cancelled');
+        
+        console.log('📦 Active orders:', allOrders.length);
+        console.log('📦 Completed orders:', allCompletedOrders.length);
+
+        if (allOrdersData.length === 0) {
+          orderBox.innerHTML = `
+            <div class="no-orders">
+              <h3>No Orders Yet</h3>
+              <p>You haven't placed any orders yet.</p>
+              <a href="index.html" class="login-btn">Start Shopping</a>
+            </div>
+          `;
+          userInfo.innerHTML = `
+            Welcome back, <strong>${currentUser.email}</strong>! 
+            <span style="color:#666; font-size:14px;">You have 0 orders</span>
+          `;
+          filters.style.display = 'none';
+          return;
+        }
+
+        // Update user info
+        userInfo.innerHTML = `
+          Welcome back, <strong>${currentUser.email}</strong>! 
+          <span style="color:#666; font-size:14px;">You have ${allOrdersData.length} order(s)</span>
+        `;
+
+        // Show filters
+        filters.style.display = 'flex';
+        
+        // Display all orders initially
+        displayAllOrders();
+
+      } catch (error) {
+        console.error('❌ Error loading orders:', error);
+        orderBox.innerHTML = `
+          <div class="error">
+            <h3>Error Loading Orders</h3>
+            <p>${error.message}</p>
+            <div style="margin-top: 15px; font-size: 14px; color: #666;">
+              <p><strong>Debug info:</strong></p>
+              <p>API URL: ${API_BASE_URL}/orders/my-orders</p>
+              <p>User: ${currentUser.email}</p>
+            </div>
+            <button onclick="loadMyOrders()" class="login-btn" style="margin-top:10px;">Retry</button>
+          </div>
+        `;
+        filters.style.display = 'none';
+      }
+    }
+
+    function filterOrders(filterType) {
+      // Update active filter button
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      if (event && event.target) {
+        event.target.classList.add('active');
+      }
+      
+      let activeFiltered = [];
+      let completedFiltered = [];
+      
+      switch(filterType) {
+        case 'delivered':
+          completedFiltered = allCompletedOrders.filter(o => o.status === 'Delivered');
+          break;
+        case 'cancelled':
+          completedFiltered = allCompletedOrders.filter(o => o.status === 'Cancelled');
+          break;
+        case 'active':
+          activeFiltered = allOrders;
+          break;
+        default: // 'all'
+          activeFiltered = allOrders;
+          completedFiltered = allCompletedOrders;
+      }
+      
+      displayOrders(activeFiltered, completedFiltered);
+    }
+
+    function displayAllOrders() {
+      displayOrders(allOrders, allCompletedOrders);
+    }
+
+    function displayOrders(activeOrders, completedOrders) {
+      const orderBox = document.getElementById('orderBox');
+      
+      // Sort orders by date (newest first)
+      activeOrders = [...activeOrders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      completedOrders = [...completedOrders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      
+      let html = '';
+
+      // Active Orders Section
+      if (activeOrders.length > 0) {
+        html += `<div class="section-title">🔄 Active Orders</div>`;
+        activeOrders.forEach(order => {
+          html += buildOrderCardHtml(order, false);
+        });
+      }
+
+      // Completed Orders Section
+      if (completedOrders.length > 0) {
+        html += `<div class="completed-section">`;
+        html += `<div class="completed-header">
+          <h4>✅ Completed Orders</h4>
+          <span>${completedOrders.length} orders</span>
+        </div>`;
+        completedOrders.forEach(order => {
+          html += buildOrderCardHtml(order, true);
+        });
+        html += `</div>`;
+      }
+
+      // If no orders at all
+      if (activeOrders.length === 0 && completedOrders.length === 0) {
+        html = `
+          <div class="no-orders">
+            <h3>No Orders Found</h3>
+            <p>No orders match your filter criteria.</p>
+            <button onclick="filterOrders('all')" class="view-details-btn" style="margin-top:10px;">Show All Orders</button>
+          </div>
+        `;
+      }
+
+      orderBox.innerHTML = html;
+    }
+
+    function buildOrderCardHtml(order, isCompleted) {
+      const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }) : 'Date not available';
+
+      const status = order.status || 'Placed';
+      const statusClass = `status-${status.toLowerCase().replace(/ /g, '-')}`;
+      const totalAmount = order.total || 
+        (order.items ? order.items.reduce((sum, item) => sum + ((item.priceEach || item.price || 0) * (item.qty || 1)), 0) : 0);
+      
+      // Check if order is hidden from admin
+      const isHiddenFromAdmin = order.hiddenFromAdmin === true;
+      
+      // Determine order class based on status and hidden state
+      let orderClass = '';
+      if (isHiddenFromAdmin) orderClass = 'hidden';
+      else if (status.toLowerCase() === 'delivered') orderClass = 'delivered';
+      else if (status.toLowerCase() === 'cancelled') orderClass = 'cancelled';
+      
+      // Format delivery date properly
+      let deliveryDateHtml = '';
+      if (order.deliveryDate) {
+        const deliveryDate = new Date(order.deliveryDate);
+        deliveryDateHtml = `
+          <div class="delivery-info">
+            <strong>📦 Expected Delivery:</strong> 
+            <span class="delivery-date">${deliveryDate.toLocaleDateString('en-IN', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}</span>
+          </div>
+        `;
+      }
+
+      let itemsHtml = '';
+      if (order.items && order.items.length > 0) {
+        order.items.forEach(item => {
+          const imageSrc = item.image || (item.images && item.images[0]) || '';
+          itemsHtml += `
+            <div class="order-item">
+              ${imageSrc ? `<img src="${imageSrc}" class="item-image" alt="${item.name}" onerror="this.onerror=null; this.style.display='none';">` : 
+                '<div class="item-image" style="background:#ddd; display:flex; align-items:center; justify-content:center; color:#666; font-size:12px;">No Image</div>'}
+              <div class="item-details">
+                <div class="item-name">${item.name || 'Product'}</div>
+                <div class="item-info">
+                  Qty: ${item.qty || 1} • 
+                  ₹${item.priceEach || item.price || 0} each
+                  ${item.size ? `• Size: ${item.size}` : ''}
+                  ${item.color ? `• Color: ${item.color}` : ''}
+                  ${item.frameColor ? `• Frame: ${item.frameColor}` : ''}
+                  ${item.symbol ? `• Symbol: ${item.symbol}` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      // Show Quick Reorder ONLY for completed orders (Delivered)
+      const showReorder = isCompleted && status.toLowerCase() === 'delivered';
+
+      return `
+        <div class="order ${orderClass}">
+          ${isHiddenFromAdmin ? `
+            <div class="hidden-order-notice">
+              ⚠️ This order is hidden from admin view but you can still view it here
+            </div>
+          ` : ''}
+          
+          <div class="order-header">
+            <div class="order-id">Order #${order.orderId || 'N/A'}
+              ${isHiddenFromAdmin ? `<span class="hidden-badge">HIDDEN</span>` : ''}
+            </div>
+            <div class="order-date">${orderDate}</div>
+          </div>
+          
+          <div class="order-total">Total: ₹${totalAmount.toFixed(2)}</div>
+          
+          <div>
+            <span class="status ${statusClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+          </div>
+
+          <div class="order-items">
+            ${itemsHtml || '<div style="color:#666; font-style:italic; padding:10px;">No item details available</div>'}
+          </div>
+
+          ${deliveryDateHtml}
+
+          ${order.progressNotes ? `
+            <div class="notes">
+              <strong>📝 Progress Notes:</strong> ${order.progressNotes}
+            </div>
+          ` : ''}
+
+          ${order.address ? `
+            <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size:14px;">
+              <strong>${order.fulfill === 'delivery' ? '📍 Delivery Address:' : '📍 Pickup Details:'}</strong><br>
+              ${order.address.name || ''}<br>
+              ${order.address.street || ''}<br>
+              ${order.address.city || ''}${order.address.pincode ? ` - ${order.address.pincode}` : ''}<br>
+              ${order.address.phone ? `📞 Phone: ${order.address.phone}` : ''}
+            </div>
+          ` : ''}
+
+          <div style="margin-top: 10px; font-size: 14px; color: #666;">
+            ${order.fulfill === 'delivery' ? '🚚 Delivery' : '🏪 Pickup'} • 
+            Payment: ${order.paymentMethod === 'upi' ? 'UPI/Online' : order.paymentMethod === 'cash' ? 'Cash on Pickup' : order.paymentMethod || 'Not specified'}
+            ${order.whatsappNumber ? `<br>📱 WhatsApp: ${order.whatsappNumber}` : ''}
+            ${order.notes ? `<br>📝 Notes: ${order.notes}` : ''}
+          </div>
+
+          <div class="action-buttons">
+            <button class="view-details-btn" onclick="viewOrderDetails('${order.orderId}')">👁 View Details</button>
+            ${showReorder ? `<button class="quick-reorder-btn" onclick="quickReorder('${order.orderId}')">🔄 Quick Reorder</button>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function viewOrderDetails(orderId) {
+      // Search in both active and completed orders
+      let order = allOrders.find(o => o.orderId === orderId);
+      if (!order) {
+        order = allCompletedOrders.find(o => o.orderId === orderId);
+      }
+      
+      if (!order) {
+        alert('Order not found!');
+        return;
+      }
+
+      document.getElementById('modalOrderTitle').textContent = `Order #${orderId}`;
+      document.getElementById('modalOrderContent').innerHTML = buildOrderDetailsHtml(order);
+      document.getElementById('orderDetailsModal').style.display = 'block';
+    }
+
+    function buildOrderDetailsHtml(order) {
+      const userEmail = order.userEmail || 'Guest Customer';
+      const orderDate = new Date(order.createdAt).toLocaleString();
+      const status = order.status || 'Placed';
+      const statusClass = `status-${status.toLowerCase().replace(/ /g, '-')}`;
+
+      let html = `
+        <div style="margin-bottom:15px">
+          <div><strong>Order ID:</strong> ${order.orderId}</div>
+          <div><strong>Date:</strong> ${orderDate}</div>
+          <div><strong>Customer:</strong> ${userEmail}</div>
+          <div><strong>WhatsApp:</strong> ${order.whatsappNumber || 'Not provided'}</div>
+          <div><strong>Status:</strong> <span class="status ${statusClass}">${status}</span></div>
+          ${order.deliveryDate ? `<div><strong>Delivery Date:</strong> ${new Date(order.deliveryDate).toLocaleDateString()}</div>` : ''}
+          ${order.progressNotes ? `<div><strong>Progress Notes:</strong> ${order.progressNotes}</div>` : ''}
+        </div>
+        
+        <div style="margin-bottom:15px">
+          <div><strong>Payment:</strong> ${order.paymentMethod || 'Not specified'}</div>
+          <div><strong>Delivery:</strong> ${order.fulfill === 'delivery' ? '🚚 Delivery' : '🏪 Pickup'}</div>
+          ${order.notes ? `<div><strong>Customer Notes:</strong> ${order.notes}</div>` : ''}
+        </div>
+      `;
+
+      if (order.address) {
+        html += `
+          <div style="margin-bottom:15px; padding:10px; background:#f0f8ff; border-radius:6px;">
+            <strong>${order.fulfill === 'delivery' ? '📍 Delivery Address:' : '📍 Pickup Details:'}</strong><br>
+            ${order.address.name || ''}<br>
+            ${order.address.street || ''}<br>
+            ${order.address.city || ''} - ${order.address.pincode || ''}<br>
+            Phone: ${order.address.phone || ''}
+          </div>
+        `;
+      }
+
+      if (order.items && order.items.length > 0) {
+        html += '<div><strong>Items:</strong></div>';
+        order.items.forEach(item => {
+          const imageSrc = item.image || '';
+          let hasValidImage = false;
+          
+          if (imageSrc) {
+            if (imageSrc.startsWith('data:image') || imageSrc.startsWith('http') || imageSrc.startsWith('/')) {
+              hasValidImage = true;
+            }
+          }
+          
+          html += `
+            <div class="order-item-detail">
+              ${hasValidImage ? 
+                `<img src="${imageSrc}" class="order-item-img" alt="${item.name}" 
+                     onerror="this.src='photo/placeholder.jpg'">` : 
+                `<div class="order-item-img" style="background:#ddd; display:flex; align-items:center; justify-content:center; color:#666; font-size:12px;">
+                    No Image
+                </div>`}
+              <div style="flex:1">
+                <div><strong>${item.name}</strong></div>
+                <div class="small" style="color:#666;font-size:13px;">
+                  Type: ${item.type || 'General'} • 
+                  Qty: ${item.qty || 1} • 
+                  ₹${item.priceEach || item.price} each
+                  ${item.size ? `• Size: ${item.size}` : ''}
+                  ${item.color ? `• Color: ${item.color}` : ''}
+                  ${item.frameColor ? `• Frame: ${item.frameColor}` : ''}
+                  ${item.symbol ? `• Symbol: ${item.symbol}` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      html += `
+        <div style="margin-top:15px; padding:10px; background:#f8f9fa; border-radius:6px;">
+          <div style="display:flex; justify-content:space-between;">
+            <div>Subtotal:</div>
+            <div>₹${order.subtotal || 0}</div>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <div>Delivery Charge:</div>
+            <div>₹${order.deliveryCharge || 0}</div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:18px; margin-top:5px;">
+            <div>Total:</div>
+            <div>₹${order.total || 0}</div>
+          </div>
+        </div>
+      `;
+
+      if (order.whatsappSent || order.emailSent) {
+        html += '<div style="margin-top:10px; font-size:12px;">';
+        if (order.whatsappSent) {
+          html += `<span style="color:#25D366;">✓ WhatsApp sent ${order.whatsappHasImage ? 'with image' : ''}</span> `;
+        }
+        if (order.emailSent) {
+          html += `<span style="color:#1e90ff;">✓ Email sent</span>`;
+        }
+        html += '</div>';
+      }
+
+      return html;
+    }
+
+    function closeOrderDetailsModal() {
+      document.getElementById('orderDetailsModal').style.display = 'none';
+    }
+
+    function quickReorder(orderId) {
+      // Search in completed orders only
+      const order = allCompletedOrders.find(o => o.orderId === orderId);
+      
+      if (!order) {
+        alert('Order not found!');
+        return;
+      }
+
+      if (!order.items || order.items.length === 0) {
+        alert('This order has no items to reorder.');
+        return;
+      }
+
+      // Get current cart
+      let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+      // Add all items from the order to cart
+      order.items.forEach(item => {
+        const cartItem = {
+          id: item.id || 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+          name: item.name,
+          price: item.priceEach || item.price || 0,
+          qty: item.qty || 1,
+          type: item.type || 'General',
+          image: item.image || '',
+          size: item.size || '',
+          color: item.color || '',
+          frameColor: item.frameColor || '',
+          symbol: item.symbol || '',
+          priceEach: item.priceEach || item.price || 0,
+          customText: item.customText || '',
+          customFont: item.customFont || '',
+          customColor: item.customColor || ''
+        };
+
+        // Check if similar item exists (with same customization)
+        const existingIndex = cart.findIndex(c => 
+          c.name === cartItem.name && 
+          c.size === cartItem.size && 
+          c.color === cartItem.color &&
+          c.frameColor === cartItem.frameColor &&
+          c.customText === cartItem.customText
+        );
+
+        if (existingIndex !== -1) {
+          cart[existingIndex].qty += cartItem.qty;
+        } else {
+          cart.push(cartItem);
+        }
+      });
+
+      localStorage.setItem('cart', JSON.stringify(cart));
+
+      alert(`✅ ${order.items.length} item(s) added to your cart!\n\nGo to cart to checkout.`);
+      
+      // Redirect to cart
+      if (confirm('Go to cart now?')) {
+        window.location.href = 'cart.html';
+      }
+    }
+
+    // Close modal on outside click
+    window.onclick = function(event) {
+      const modal = document.getElementById('orderDetailsModal');
+      if (event.target === modal) {
+        closeOrderDetailsModal();
+      }
+    };
+
+    // Load orders on page load
+    document.addEventListener('DOMContentLoaded', loadMyOrders);
+  </script>
+</body>
+</html>

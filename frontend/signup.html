@@ -1,0 +1,357 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Sign up — Soul Art Studio</title>
+  <style>
+    body{font-family:Arial;margin:0;background:#f4f6f9}
+    .wrap{max-width:420px;margin:40px auto;padding:20px;background:#fff;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
+    input{width:100%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #ddd}
+    .btn{background:#1e90ff;color:#fff;padding:10px;border-radius:6px;border:0;width:100%;font-weight:700;cursor:pointer}
+    .btn:disabled{background:#ccc;cursor:not-allowed}
+    .btn-success{background:#25D366}
+    .muted{font-size:13px;color:#666;margin-top:8px}
+    a{color:#1e90ff;text-decoration:none}
+    .error{color:red;text-align:center;margin-top:10px;padding:10px;background:#ffebee;border-radius:5px}
+    .success{color:green;text-align:center;margin-top:10px;padding:10px;background:#e8f5e9;border-radius:5px}
+    .warning{color:#ff9800;text-align:center;margin-top:10px;padding:10px;background:#fff3cd;border-radius:5px}
+    .info{color:#2196F3;text-align:center;margin-top:10px;padding:10px;background:#e3f2fd;border-radius:5px}
+    .otp-section{display:none;margin-top:20px;padding:20px;background:#f8fff8;border-radius:8px;border:1px solid #25D366}
+    .otp-input{width:200px;padding:15px;font-size:24px;text-align:center;letter-spacing:10px;border:2px solid #1e90ff;border-radius:8px;margin:10px auto;display:block}
+    .timer{color:#ff4444;font-weight:bold;text-align:center;margin:10px 0}
+    .step-indicator{display:flex;justify-content:space-between;margin:20px 0}
+    .step{flex:1;text-align:center;padding:10px;color:#ccc;border-bottom:2px solid #ccc}
+    .step.active{color:#1e90ff;border-bottom-color:#1e90ff;font-weight:bold}
+    .loading{display:none;text-align:center;color:#1e90ff;margin:10px 0}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2 style="text-align:center">Create Account</h2>
+    
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+      <div class="step active" id="step1">1. Enter Details</div>
+      <div class="step" id="step2">2. Verify Email</div>
+      <div class="step" id="step3">3. Complete</div>
+    </div>
+    
+    <!-- Step 1: Basic Info -->
+    <div id="basicInfoSection">
+      <input id="email" type="email" placeholder="Email address" />
+      <input id="name" type="text" placeholder="Full Name (Optional)" />
+      <input id="phone" type="tel" placeholder="Phone Number (Optional)" />
+      <input id="whatsapp" type="tel" placeholder="WhatsApp Number (Optional)" />
+      <input id="password" type="password" placeholder="Create password (min. 6 characters)" />
+      <input id="confirm" type="password" placeholder="Confirm password" />
+      <button class="btn" id="sendOtpBtn">Send Verification OTP</button>
+    </div>
+    
+    <!-- Step 2: OTP Verification -->
+    <div id="otpSection" class="otp-section">
+      <h3 style="text-align:center;color:#25D366">📧 Verify Your Email</h3>
+      <p style="text-align:center">We sent a 6-digit OTP to: <br><strong id="otpEmail"></strong></p>
+      
+      <input type="text" id="otpInput" class="otp-input" placeholder="000000" maxlength="6" inputmode="numeric">
+      
+      <div style="text-align:center;margin:15px 0">
+        <button id="verifyOtpBtn" class="btn btn-success">Verify OTP & Create Account</button>
+        <button id="resendOtpBtn" style="background:#666;margin-top:10px">Resend OTP</button>
+      </div>
+      
+      <div id="otpTimer" class="timer"></div>
+      <div id="otpMessage"></div>
+    </div>
+    
+    <!-- Loading -->
+    <div id="loading" class="loading">
+      <div>🔄 Processing...</div>
+    </div>
+    
+    <!-- Messages -->
+    <div id="msg"></div>
+    
+    <div class="muted" style="text-align:center;margin-top:20px">
+      Already have an account? <a href="signin.html">Sign in</a>
+    </div>
+  </div>
+
+<script>
+// State management
+let otpTimer = null;
+let otpTimeLeft = 600; // 10 minutes in seconds
+let userData = {}; // Store user data between steps
+
+// Update step indicator
+function updateStepIndicator(step) {
+  document.getElementById('step1').classList.remove('active');
+  document.getElementById('step2').classList.remove('active');
+  document.getElementById('step3').classList.remove('active');
+  document.getElementById(`step${step}`).classList.add('active');
+}
+
+// Show/hide sections
+function showSection(section) {
+  document.getElementById('basicInfoSection').style.display = 'none';
+  document.getElementById('otpSection').style.display = 'none';
+  document.getElementById(`${section}Section`).style.display = 'block';
+}
+
+// Show loading
+function showLoading(show) {
+  document.getElementById('loading').style.display = show ? 'block' : 'none';
+  document.getElementById('sendOtpBtn').disabled = show;
+  document.getElementById('verifyOtpBtn').disabled = show;
+}
+
+// Show message
+function showMessage(type, text) {
+  const msg = document.getElementById('msg');
+  msg.innerHTML = `<div class="${type}">${text}</div>`;
+}
+
+// Clear message
+function clearMessage() {
+  document.getElementById('msg').innerHTML = '';
+}
+
+// Start OTP timer
+function startOtpTimer() {
+  otpTimeLeft = 600; // 10 minutes
+  
+  const timerElement = document.getElementById('otpTimer');
+  const resendBtn = document.getElementById('resendOtpBtn');
+  
+  resendBtn.disabled = true;
+  resendBtn.style.opacity = '0.5';
+  
+  otpTimer = setInterval(() => {
+    otpTimeLeft--;
+    
+    const minutes = Math.floor(otpTimeLeft / 60);
+    const seconds = otpTimeLeft % 60;
+    
+    timerElement.textContent = `⏳ OTP expires in: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    if (otpTimeLeft <= 0) {
+      clearInterval(otpTimer);
+      timerElement.textContent = '⌛ OTP expired';
+      resendBtn.disabled = false;
+      resendBtn.style.opacity = '1';
+      showMessage('warning', 'OTP expired. Please request a new one.');
+    }
+  }, 1000);
+}
+
+// Stop OTP timer
+function stopOtpTimer() {
+  if (otpTimer) {
+    clearInterval(otpTimer);
+    otpTimer = null;
+  }
+}
+
+// Step 1: Send OTP
+document.getElementById('sendOtpBtn').addEventListener('click', async () => {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const confirm = document.getElementById('confirm').value;
+  const name = document.getElementById('name').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const whatsapp = document.getElementById('whatsapp').value.trim();
+
+  // Validation
+  if(!email || !password) { 
+    showMessage('error', 'Please fill email and password'); 
+    return; 
+  }
+  
+  if(password.length < 6) {
+    showMessage('error', 'Password must be at least 6 characters');
+    return;
+  }
+  
+  if(password !== confirm) { 
+    showMessage('error', 'Passwords do not match'); 
+    return; 
+  }
+
+  // Basic email validation
+  if (!email.includes('@') || !email.includes('.')) {
+    showMessage('error', 'Please enter a valid email address');
+    return;
+  }
+
+  // Store user data for next step
+  userData = { email, password, name, phone, whatsappNumber: whatsapp };
+
+  try {
+    showLoading(true);
+    clearMessage();
+
+    // Send OTP request
+    const response = await fetch('/api/signup/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to send OTP');
+    }
+
+    // Success: Show OTP section
+    showLoading(false);
+    showMessage('success', 'OTP sent to your email! Check your inbox.');
+    
+    // Update UI for step 2
+    document.getElementById('otpEmail').textContent = email;
+    document.getElementById('otpInput').value = '';
+    document.getElementById('otpMessage').innerHTML = '';
+    
+    showSection('otp');
+    updateStepIndicator(2);
+    startOtpTimer();
+    
+    // Auto-focus OTP input
+    setTimeout(() => {
+      document.getElementById('otpInput').focus();
+    }, 100);
+
+  } catch (error) {
+    showLoading(false);
+    showMessage('error', error.message || 'Failed to send OTP. Please try again.');
+    console.error('OTP send error:', error);
+  }
+});
+
+// Step 2: Verify OTP
+document.getElementById('verifyOtpBtn').addEventListener('click', async () => {
+  const otp = document.getElementById('otpInput').value.trim();
+  const email = userData.email;
+
+  if (!otp || otp.length !== 6) {
+    showMessage('error', 'Please enter the 6-digit OTP');
+    return;
+  }
+
+  try {
+    showLoading(true);
+    clearMessage();
+    stopOtpTimer();
+
+    // Verify OTP
+    const response = await fetch('/api/signup/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'OTP verification failed');
+    }
+
+    // Success: Account created
+    showLoading(false);
+    updateStepIndicator(3);
+    
+    // Save token and user data
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('userData', JSON.stringify(data.user));
+    localStorage.setItem('auth', JSON.stringify({ email }));
+    
+    showMessage('success', '✅ Account created successfully! Welcome to Soul Art Studio.');
+    
+    // Redirect after delay
+    setTimeout(() => {
+      window.location.href = 'index.html';
+    }, 2000);
+
+  } catch (error) {
+    showLoading(false);
+    showMessage('error', error.message || 'OTP verification failed');
+    console.error('OTP verify error:', error);
+    startOtpTimer(); // Restart timer on error
+  }
+});
+
+// Resend OTP
+document.getElementById('resendOtpBtn').addEventListener('click', async () => {
+  const email = userData.email;
+
+  try {
+    showLoading(true);
+    document.getElementById('otpMessage').innerHTML = 'Resending OTP...';
+    
+    const response = await fetch('/api/signup/resend-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to resend OTP');
+    }
+
+    showLoading(false);
+    document.getElementById('otpMessage').innerHTML = '<div class="success">✅ New OTP sent!</div>';
+    
+    // Reset timer
+    stopOtpTimer();
+    startOtpTimer();
+    
+    // Clear OTP input and refocus
+    document.getElementById('otpInput').value = '';
+    document.getElementById('otpInput').focus();
+
+  } catch (error) {
+    showLoading(false);
+    document.getElementById('otpMessage').innerHTML = `<div class="error">${error.message}</div>`;
+    console.error('Resend OTP error:', error);
+  }
+});
+
+// Auto-move between OTP digits (optional)
+document.getElementById('otpInput').addEventListener('input', function(e) {
+  this.value = this.value.replace(/[^0-9]/g, '');
+  
+  // Auto-submit if 6 digits entered
+  if (this.value.length === 6) {
+    setTimeout(() => {
+      document.getElementById('verifyOtpBtn').click();
+    }, 300);
+  }
+});
+
+// Allow OTP verification on Enter key
+document.getElementById('otpInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter' && this.value.length === 6) {
+    document.getElementById('verifyOtpBtn').click();
+  }
+});
+
+// Allow basic info submission on Enter key
+document.getElementById('confirm').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    document.getElementById('sendOtpBtn').click();
+  }
+});
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  updateStepIndicator(1);
+  showSection('basicInfo');
+  
+  // Auto-focus email on load
+  document.getElementById('email').focus();
+});
+</script>
+</body>
+</html>

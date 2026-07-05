@@ -1,0 +1,196 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Verify OTP — Soul Art Studio</title>
+<style>
+ body{font-family:Arial;margin:0;background:#f4f6f9}
+ .wrap{max-width:420px;margin:40px auto;padding:20px;background:#fff;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
+ input{width:100%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #ddd}
+ .btn{background:#1e90ff;color:#fff;padding:10px;border-radius:6px;border:0;width:100%;font-weight:700;cursor:pointer}
+ .muted{color:#666}
+ .resend{text-align:center;margin-top:15px;font-size:14px}
+ .timer{color:#ff4444;font-weight:bold}
+ .success{color:green;font-weight:bold}
+ .error{color:red;font-weight:bold}
+ .loading{display:none;text-align:center;color:#1e90ff;margin:10px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Verify OTP</h2>
+  <div id="info" class="muted"></div>
+  <input id="otp" placeholder="Enter 6-digit OTP" maxlength="6" />
+  <input id="newPass" type="password" placeholder="New password" />
+  <input id="confirmPass" type="password" placeholder="Confirm new password" />
+  <button class="btn" id="verifyBtn">Verify & Reset Password</button>
+  <div class="loading" id="loading">Verifying OTP...</div>
+  
+  <div class="resend">
+    Didn't receive OTP? 
+    <a href="#" id="resendLink" onclick="resendOTP()">Resend OTP</a>
+    <span id="timer" class="timer"></span>
+  </div>
+  
+  <div id="msg" class="muted"></div>
+</div>
+
+<script>
+const API_BASE = 'http://localhost:5000/api';
+const email = localStorage.getItem('resetEmail');
+
+// Display email info
+if (email) {
+  document.getElementById('info').textContent = `OTP sent to ${email}`;
+} else {
+  document.getElementById('info').textContent = 'Email not found. Please restart password reset.';
+  document.getElementById('info').className = 'error';
+}
+
+let resendTimer = 60;
+let resendInterval;
+
+// Timer for resend OTP
+function startResendTimer() {
+    const timerElement = document.getElementById('timer');
+    const resendLink = document.getElementById('resendLink');
+    
+    resendLink.style.display = 'none';
+    timerElement.textContent = ` (${resendTimer}s)`;
+    
+    resendInterval = setInterval(() => {
+        resendTimer--;
+        timerElement.textContent = ` (${resendTimer}s)`;
+        
+        if (resendTimer <= 0) {
+            clearInterval(resendInterval);
+            resendLink.style.display = 'inline';
+            timerElement.textContent = '';
+            resendTimer = 60;
+        }
+    }, 1000);
+}
+
+// Resend OTP function
+async function resendOTP() {
+    if (!email) {
+        alert('Email not found. Please restart the password reset process.');
+        return;
+    }
+    
+    const msg = document.getElementById('msg');
+    const resendLink = document.getElementById('resendLink');
+    
+    msg.textContent = 'Sending new OTP...';
+    msg.className = '';
+    resendLink.style.display = 'none';
+
+    try {
+        const response = await fetch(`${API_BASE}/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            msg.className = 'success';
+            msg.textContent = 'New OTP sent successfully!';
+            startResendTimer();
+        } else {
+            msg.className = 'error';
+            msg.textContent = data.error || 'Failed to resend OTP';
+            resendLink.style.display = 'inline';
+        }
+    } catch (error) {
+        msg.className = 'error';
+        msg.textContent = 'Network error. Please try again.';
+        resendLink.style.display = 'inline';
+    }
+}
+
+// Verify OTP and reset password
+document.getElementById('verifyBtn').addEventListener('click', async () => {
+  const otp = document.getElementById('otp').value.trim();
+  const newPass = document.getElementById('newPass').value;
+  const confirmPass = document.getElementById('confirmPass').value;
+  const msg = document.getElementById('msg');
+  const loading = document.getElementById('loading');
+  const btn = document.getElementById('verifyBtn');
+
+  // Clear previous messages
+  msg.className = '';
+  msg.textContent = '';
+  
+  if(!otp || !newPass || !confirmPass) { 
+      msg.className = 'error';
+      msg.textContent = 'Please fill all fields'; 
+      return; 
+  }
+  
+  if (newPass !== confirmPass) {
+      msg.className = 'error';
+      msg.textContent = 'Passwords do not match';
+      return;
+  }
+  
+  if (newPass.length < 6) {
+      msg.className = 'error';
+      msg.textContent = 'Password must be at least 6 characters';
+      return;
+  }
+
+  try {
+      loading.style.display = 'block';
+      btn.disabled = true;
+
+      console.log('🔄 Verifying OTP for:', email);
+
+      const response = await fetch(`${API_BASE}/reset-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, otp, newPassword: newPass })
+      });
+
+      const data = await response.json();
+      console.log('📦 Response data:', data);
+
+      if (data.success) {
+          msg.className = 'success';
+          msg.textContent = '✅ Password reset successfully! Redirecting to sign-in...';
+          
+          setTimeout(() => { 
+              localStorage.removeItem('resetEmail'); 
+              window.location.href = 'signin.html'; 
+          }, 2000);
+      } else {
+          msg.className = 'error';
+          msg.textContent = data.error || 'Verification failed';
+      }
+      
+  } catch (error) {
+      console.error('❌ OTP verification error:', error);
+      msg.className = 'error';
+      msg.textContent = 'Network error. Please try again.';
+  } finally {
+      loading.style.display = 'none';
+      btn.disabled = false;
+  }
+});
+
+// Allow form submission on Enter key
+document.getElementById('confirmPass').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        document.getElementById('verifyBtn').click();
+    }
+});
+
+// Start the resend timer when page loads
+startResendTimer();
+
+// Auto-focus OTP input
+document.getElementById('otp').focus();
+</script>
+</body>
+</html>

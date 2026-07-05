@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>TURBO WHEELS — Cart</title>
+<script src="auth.js"></script>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;margin:0;background:#f4f6f9}
+  header{background:#1e90ff;color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px}
+  .container{max-width:900px;margin:18px auto;padding:16px}
+  .card{background:#fff;padding:14px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
+  .item{display:flex;gap:12px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #eee}
+  .img{width:90px;height:90px;border-radius:8px;object-fit:cover}
+  .muted{color:#666;font-size:14px}
+  .btn{background:#1e90ff;color:#fff;padding:8px 12px;border-radius:6px;border:none;cursor:pointer;font-weight:600}
+  .btn-grey{background:#666;color:#fff}
+  @media(max-width:700px){
+    .item{flex-direction:column;align-items:flex-start}
+    .img{width:100%;height:200px}
+  }
+  
+  .auth-message{
+    background:#fff3cd;
+    border:1px solid #ffeaa7;
+    color:#856404;
+    padding:20px;
+    border-radius:6px;
+    margin-top:20px;
+    text-align:center;
+  }
+  
+  .auth-message a{
+    color:#1e90ff;
+    font-weight:bold;
+    text-decoration:none;
+    margin:0 10px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div style="font-weight:700">TURBO WHEELS</div>
+</header>
+
+<div class="container">
+
+  <h1>Your Cart</h1>
+
+  <div id="authMessage" class="auth-message" style="display:none;">
+    <h3>Please Sign In</h3>
+    <p>You need to be signed in to view your cart.</p>
+    <div style="margin-top:15px;">
+      <a href="signin.html">Sign In</a> | 
+      <a href="signup.html">Create Account</a>
+    </div>
+  </div>
+
+  <div class="card" id="cartItems"></div>
+
+  <div class="card" style="margin-top:16px">
+    <div style="font-size:18px;font-weight:700">
+      Total: ₹ <span id="cartTotal">0</span>
+    </div>
+    <button id="buyAllBtn" class="btn" style="margin-top:12px;width:100%">Proceed to Buy All</button>
+  </div>
+
+</div>
+
+<script>
+// Initialize auth
+const currentUser = Auth.init();
+const authMessage = document.getElementById('authMessage');
+
+// Check if user is logged in
+if (!currentUser) {
+    authMessage.style.display = 'block';
+    document.getElementById('cartItems').style.display = 'none';
+    document.querySelector('.card:nth-child(4)').style.display = 'none';
+} else {
+    authMessage.style.display = 'none';
+    loadCart();
+}
+
+function loadCart() {
+    // Only proceed if user is authenticated
+    if (!currentUser) return;
+    
+    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    const area = document.getElementById("cartItems");
+    area.innerHTML = "";
+
+    if (cart.length === 0) {
+        area.innerHTML = "<div class='muted'>Your cart is empty.</div>";
+        document.getElementById("cartTotal").textContent = "0";
+        return;
+    }
+
+    let total = 0;
+
+    cart.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "item";
+
+        const imgSrc = item.image || (item.images && item.images[0]) || "";
+        
+        // Ensure item has an ID
+        if (!item.id) {
+            item.id = 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Create item info text
+        let itemInfo = "";
+        if (item.type || item.size) {
+            itemInfo += `${item.size || ""} ${item.type || ""}`;
+        }
+        if (item.symbol) {
+            itemInfo += itemInfo ? ` • Symbol: ${item.symbol}` : `Symbol: ${item.symbol}`;
+        }
+        if (item.color) {
+            itemInfo += itemInfo ? ` • Color: ${item.color}` : `Color: ${item.color}`;
+        }
+
+        div.innerHTML = `
+            <img class="img" src="${imgSrc}" alt="${item.name || 'Product'}"/>
+            <div style="flex:1">
+                <div style="font-weight:700">${item.name || 'Product'}</div>
+                <div class="muted">${itemInfo || "Custom Item"}</div>
+                <div class="muted">Qty: ${item.qty || 1}</div>
+                <div style="margin-top:6px;font-weight:600">₹${item.priceEach || item.price || 0}</div>
+                <button class="btn buy-single-btn" style="margin-top:10px" data-id="${item.id}">Buy Now</button>
+                <button class="btn-grey remove-btn" style="margin-top:10px" data-id="${item.id}">Remove</button>
+            </div>
+        `;
+
+        area.appendChild(div);
+
+        // Calculate total
+        const price = Number(item.priceEach || item.price) || 0;
+        total += price * (item.qty || 1);
+    });
+
+    document.getElementById("cartTotal").textContent = total;
+    
+    // Attach event listeners to dynamically created buttons
+    attachEventListeners();
+}
+
+function attachEventListeners() {
+    // Attach event listeners to Buy Now buttons
+    document.querySelectorAll('.buy-single-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const itemId = this.getAttribute('data-id');
+            proceedToBuySingle(itemId);
+        });
+    });
+    
+    // Attach event listeners to Remove buttons
+    document.querySelectorAll('.remove-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const itemId = this.getAttribute('data-id');
+            removeFromCart(itemId);
+        });
+    });
+    
+    // Attach event listener to Buy All button
+    document.getElementById('buyAllBtn').addEventListener('click', buyAll);
+}
+
+/* REMOVE */
+function removeFromCart(id) {
+    if (!currentUser) {
+        alert("Please sign in to manage your cart.");
+        window.location.href = "signin.html";
+        return;
+    }
+    
+    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    cart = cart.filter(item => String(item.id) === String(id) ? false : true);
+    localStorage.setItem("cart", JSON.stringify(cart));
+    loadCart();
+}
+
+/* BUY SINGLE */
+function proceedToBuySingle(id) {
+    if (!currentUser) {
+        alert("Please sign in to buy items.");
+        window.location.href = "signin.html";
+        return;
+    }
+    
+    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    
+    // Find the item with matching ID
+    let item = null;
+    for (let i = 0; i < cart.length; i++) {
+        if (String(cart[i].id) === String(id)) {
+            item = cart[i];
+            break;
+        }
+    }
+
+    if (!item) {
+        alert("Item not found in cart!");
+        return;
+    }
+
+    // Ensure item has required properties
+    if (!item.qty) item.qty = 1;
+    if (!item.priceEach && item.price) item.priceEach = item.price;
+
+    console.log("Proceeding to buy single item:", item);
+    localStorage.setItem("buyNow", JSON.stringify([item]));
+    window.location.href = "buy.html";
+}
+
+/* BUY ALL */
+function buyAll() {
+    if (!currentUser) {
+        alert("Please sign in to buy items.");
+        window.location.href = "signin.html";
+        return;
+    }
+    
+    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+    if (cart.length === 0) {
+        alert("Your cart is empty.");
+        return;
+    }
+
+    // Ensure all items have required properties
+    cart = cart.map(item => {
+        if (!item.qty) item.qty = 1;
+        if (!item.priceEach && item.price) item.priceEach = item.price;
+        return item;
+    });
+
+    console.log("Proceeding to buy all items:", cart.length);
+    localStorage.setItem("buyNow", JSON.stringify(cart));
+    window.location.href = "buy.html";
+}
+
+// Initial event listener attachment
+document.addEventListener('DOMContentLoaded', function() {
+    if (currentUser) {
+        // Attach buy all button listener
+        const buyAllBtn = document.getElementById('buyAllBtn');
+        if (buyAllBtn) {
+            buyAllBtn.addEventListener('click', buyAll);
+        }
+    }
+});
+</script>
+
+</body>
+</html>

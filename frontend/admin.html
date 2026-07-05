@@ -1,0 +1,1772 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Admin — Soul Art Studio</title>
+<script src="auth.js"></script>
+<style>
+ body{font-family:Arial;margin:0;background:#f6f7fb}
+ .header{background:#1e90ff;color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px}
+ .wrap{max-width:1100px;margin:20px auto;padding:16px}
+ .col{display:inline-block;vertical-align:top}
+ .left{width:28%;margin-right:2%}
+ .right{width:70%}
+ .card{background:#fff;padding:12px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.06);margin-bottom:12px}
+ .userRow{padding:10px;border-bottom:1px solid #eee;cursor:pointer}
+ .userRow:hover{background:#fafafa}
+ .small{font-size:13px;color:#666}
+ img.thumb{max-width:120px;border-radius:6px;border:1px solid #ddd;cursor:pointer}
+ .btn{padding:8px 10px;background:#1e90ff;color:#fff;border-radius:6px;border:none;cursor:pointer}
+ .btn-success{background:#28a745;}
+ .btn-danger{background:#dc3545;}
+ .btn-warning{background:#ffc107;color:#000;}
+ .stats{display:flex;justify-content:space-between;margin-bottom:15px;padding:10px;background:#f8f9fa;border-radius:6px}
+ .stat-item{text-align:center}
+ .stat-number{font-size:24px;font-weight:bold;color:#1e90ff}
+ .stat-label{font-size:12px;color:#666}
+ 
+ /* Modal Styles */
+ .modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background-color:rgba(0,0,0,0.5)}
+.modal-content::-webkit-scrollbar{
+    width:10px;
+}
+
+.modal-content::-webkit-scrollbar-track{
+    background:#f1f1f1;
+    border-radius:10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb{
+    background:#888;
+    border-radius:10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover{
+    background:#555;
+}
+modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;padding-bottom:10px;border-bottom:1px solid #eee}
+ .modal-header h3{margin:0}
+ .close-modal{background:none;border:none;font-size:24px;cursor:pointer;color:#666}
+ .form-group{margin-bottom:15px}
+ .form-group label{display:block;margin-bottom:5px;font-weight:600}
+ .form-group input,.form-group select,.form-group textarea{width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:14px}
+ .form-group textarea{min-height:60px;resize:vertical}
+ 
+ /* Image Upload */
+ .image-upload-area{
+    border:2px dashed #1e90ff;
+    border-radius:8px;
+    padding:30px;
+    text-align:center;
+    cursor:pointer;
+    background:#f8faff;
+    margin-bottom:15px;
+ }
+ 
+ .image-upload-area:hover{
+    background:#eef4ff;
+ }
+ 
+ .image-upload-icon{
+    font-size:48px;
+    color:#1e90ff;
+    margin-bottom:10px;
+ }
+ 
+ .image-preview{
+    max-width:100%;
+    max-height:200px;
+    border-radius:8px;
+    margin-top:10px;
+    display:none;
+ }
+ 
+ .remove-image{
+    background:#dc3545;
+    color:white;
+    border:none;
+    padding:5px 10px;
+    border-radius:4px;
+    margin-top:10px;
+    cursor:pointer;
+    display:none;
+ }
+ 
+ /* Photo Gallery */
+ .photo-gallery{display:grid;grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));gap:10px;margin-top:15px}
+ .photo-item{position:relative;border:1px solid #ddd;border-radius:6px;overflow:hidden}
+ .photo-item img{width:100%;height:120px;object-fit:cover}
+ .photo-info{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.7);color:#fff;padding:5px;font-size:11px}
+ .download-btn{position:absolute;top:5px;right:5px;background:#28a745;color:white;border:none;border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer}
+ 
+ /* Tabs */
+ .tabs{display:flex;border-bottom:1px solid #ddd;margin-bottom:15px}
+ .tab-btn{padding:10px 20px;background:none;border:none;cursor:pointer;font-weight:600;color:#666;border-bottom:3px solid transparent}
+ .tab-btn.active{color:#1e90ff;border-bottom-color:#1e90ff}
+ .tab-content{display:none}
+ .tab-content.active{display:block}
+ 
+ /* Bouquet Products */
+ .bouquet-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));gap:15px;margin-top:15px}
+ .bouquet-card{border:1px solid #ddd;border-radius:8px;overflow:hidden;background:#fff}
+ .bouquet-card img{width:100%;height:150px;object-fit:cover}
+ .bouquet-info{padding:10px}
+ .bouquet-name{font-weight:bold;margin-bottom:5px}
+ .bouquet-price{color:#28a745;font-weight:bold}
+ .bouquet-actions{padding:10px;background:#f8f9fa;border-top:1px solid #eee}
+ 
+ /* Action Buttons Container */
+ .action-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
+ .action-buttons .btn{flex:1;min-width:120px}
+ 
+ /* Photo Preview Modal */
+ .photo-modal{display:none;position:fixed;z-index:2000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.9);justify-content:center;align-items:center}
+ .photo-modal-content{max-width:90%;max-height:90%;position:relative}
+ .photo-modal-content img{max-width:100%;max-height:80vh;border-radius:8px}
+ .photo-modal-info{color:white;text-align:center;margin-top:10px}
+
+ /* Loading and Error */
+ .loading{text-align:center;padding:30px;color:#666}
+ .error{background:#ffebee;color:#d32f2f;padding:15px;border-radius:6px;margin:10px 0;text-align:center}
+ 
+ /* Order Details */
+ .order-details{padding:15px;background:#f9f9f9;border-radius:6px;margin:10px 0}
+ .order-item-detail{display:flex;align-items:center;padding:10px;background:white;border-radius:4px;margin:5px 0}
+ .order-item-img{width:60px;height:60px;object-fit:cover;border-radius:4px;margin-right:10px}
+ 
+ /* User Orders Panel */
+ .user-orders-panel{max-height:400px;overflow-y:auto;padding:10px;background:#f8f9fa;border-radius:6px}
+ 
+ /* Completed Orders Section */
+ .completed-section{margin-top:30px;padding-top:20px;border-top:2px solid #28a745}
+ .completed-header{background:#e8f5e8;padding:10px;border-radius:6px;margin-bottom:15px;display:flex;justify-content:space-between;align-items:center}
+ .completed-header h3{margin:0;color:#2e7d32}
+ 
+ /* Status Colors */
+ .status{display:inline-block;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:bold}
+ .status-placed{background:#e3f2fd;color:#1976d2}
+ .status-processing{background:#fff3e0;color:#f57c00}
+ .status-shipped{background:#e8f5e8;color:#388e3c}
+ .status-delivered{background:#d4edda;color:#155724}
+ .status-cancelled{background:#f8d7da;color:#721c24}
+ 
+ /* Action Buttons */
+ .action-btns{display:flex;gap:8px;margin-top:10px}
+
+ /* Product Styles */
+ .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:15px;margin-top:15px}
+ .product-card{border:1px solid #ddd;border-radius:8px;overflow:hidden;background:#fff}
+ .product-card img{width:100%;height:150px;object-fit:cover}
+ .product-info{padding:10px}
+ .product-name{font-weight:bold;margin-bottom:5px}
+ .product-price{color:#28a745;font-weight:bold}
+ .product-actions{padding:10px;background:#f8f9fa;border-top:1px solid #eee;display:flex;gap:8px}
+ .product-actions button{flex:1}
+
+ /* Scroll for orders - ADDED */
+ .orders-scroll-container{max-height:450px;overflow-y:auto;padding-right:8px}
+ .orders-scroll-container::-webkit-scrollbar{width:8px}
+ .orders-scroll-container::-webkit-scrollbar-thumb{background:#bbb;border-radius:10px}
+ .orders-scroll-container::-webkit-scrollbar-track{background:#f1f1f1}
+ .orders-scroll-container::-webkit-scrollbar-thumb:hover{background:#999}
+</style>
+</head>
+<body>
+<div class="header"><strong>Admin Panel - TURBO WHEELS</strong></div>
+<div class="wrap">
+  <div class="left">
+    <div class="card">
+      <h3>Users & Orders</h3>
+      <div id="usersList" class="loading">Loading users...</div>
+    </div>
+    <div class="card">
+      <h3>Quick Actions</h3>
+      <div class="action-buttons">
+        <button onclick="showTab('orders')" class="btn">View All Orders</button>
+        <button onclick="showTab('photos')" class="btn" style="background:#6f42c1;">Add product</button>
+        <button onclick="showTab('bouquets')" class="btn btn-success">Manage Bouquets</button>
+        <button onclick="fetchDatabaseOrders()" class="btn btn-warning">Refresh Orders</button>
+        <button onclick="showHiddenOrders()" class="btn" style="background:#6c757d;">👁️ Hidden Orders</button>
+        <button onclick="clearAllOrders()" class="btn btn-danger">🗑️ Clear All Orders</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <!-- Tabs Navigation -->
+    <div class="tabs" id="tabsNav">
+      <button class="tab-btn active" onclick="showTab('orders')">All Orders</button>
+      <button class="tab-btn" onclick="showTab('photos')">Add products</button>
+      <button class="tab-btn" onclick="showTab('bouquets')">Bouquet Products</button>
+      <button class="tab-btn" onclick="showTab('userOrders')" id="userOrdersTab" style="display:none">User Orders</button>
+    </div>
+
+    <!-- All Orders Tab -->
+    <div id="ordersTab" class="tab-content active">
+      <div class="card">
+        <h3>All Orders from Database</h3>
+        <div id="statsArea" class="stats">
+          <div class="stat-item">
+            <div class="stat-number">0</div>
+            <div class="stat-label">Total Orders</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">₹0</div>
+            <div class="stat-label">Total Revenue</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">0</div>
+            <div class="stat-label">Active</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">0</div>
+            <div class="stat-label">Completed</div>
+          </div>
+        </div>
+        <div id="ordersList" class="loading">Loading orders from database...</div>
+        
+        <!-- Completed Orders Section -->
+        <div id="completedOrdersSection" class="completed-section" style="display:none">
+          <div class="completed-header">
+            <h3>✅ Completed Orders</h3>
+            <span id="completedCount">0 orders</span>
+          </div>
+          <div id="completedOrdersList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Orders Tab -->
+    <div id="userOrdersTabContent" class="tab-content">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
+          <h3 id="userOrdersTitle">User Orders</h3>
+          <button onclick="showTab('orders')" class="btn">← Back to All Orders</button>
+        </div>
+        <div id="userOrdersList" class="user-orders-panel">
+          <!-- User-specific orders will appear here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Product Tab -->
+    <div id="photosTab" class="tab-content">
+      <div class="card">
+        <h2>Add / Edit Product</h2>
+        
+        <input type="hidden" id="editProductId">
+        
+        <div class="form-group">
+          <label>Product Name *</label>
+          <input type="text" id="productName" placeholder="Enter product name">
+        </div>
+        
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="productDescription" rows="4" placeholder="Product description"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label>Price (₹) *</label>
+          <input type="number" id="productPrice" placeholder="0" min="0" step="10">
+        </div>
+        
+        <div class="form-group">
+          <label>Stock *</label>
+          <input type="number" id="productStock" placeholder="0" min="0">
+        </div>
+        
+        <div class="form-group">
+          <label>Product Image</label>
+          <input type="file" id="productImage" accept="image/*">
+        </div>
+        
+        <br>
+        <div style="display:flex;gap:10px;">
+          <button onclick="saveProduct()" class="btn btn-success" style="flex:1">Save Product</button>
+          <button onclick="cancelEdit()" class="btn btn-danger" style="flex:1">Cancel</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Products</h2>
+        <div id="productList" class="loading">Loading products...</div>
+      </div>
+    </div>
+
+    <!-- Bouquet Products Tab -->
+    <div id="bouquetsTab" class="tab-content">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
+          <h3 style="margin:0">Bouquet Products</h3>
+          <div>
+            <button onclick="openAddBouquetModal()" class="btn btn-success">+ Add Bouquet</button>
+          </div>
+        </div>
+        <div id="bouquetsList" class="loading">Loading bouquet products...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Bouquet Modal -->
+<div id="addBouquetModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Add New Bouquet</h3>
+      <button class="close-modal" onclick="closeAddBouquetModal()">&times;</button>
+    </div>
+    <div class="form-group">
+      <label>Bouquet Name *</label>
+      <input type="text" id="bouquetName" placeholder="e.g., Rose Special Bouquet">
+    </div>
+    
+    <div class="form-group">
+      <label>Price (₹) *</label>
+      <input type="number" id="bouquetPrice" min="100" max="5000" value="350" step="50">
+    </div>
+    
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="bouquetDesc" placeholder="Short description of the bouquet"></textarea>
+    </div>
+    
+    <div class="form-group">
+      <label>Bouquet Image *</label>
+      <div class="image-upload-area" id="imageUploadArea" onclick="document.getElementById('imageFile').click()">
+        <div class="image-upload-icon">📷</div>
+        <div>Click to upload bouquet image</div>
+        <div class="small">JPEG, PNG or GIF (Max 2MB)</div>
+        <input type="file" id="imageFile" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
+      </div>
+      <img id="imagePreview" class="image-preview" alt="Image Preview">
+      <button id="removeImageBtn" class="remove-image" onclick="removeImage()">Remove Image</button>
+    </div>
+    
+    <div class="form-group">
+      <label>Category *</label>
+      <select id="bouquetCategory">
+        <option value="Rose">Rose Bouquets</option>
+        <option value="Mixed">Mixed Flowers</option>
+        <option value="Lily">Lily Bouquets</option>
+        <option value="Seasonal">Seasonal</option>
+        <option value="Premium">Premium</option>
+        <option value="Custom">Custom</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label>Featured</label>
+      <select id="bouquetFeatured">
+        <option value="true">Yes - Show on homepage</option>
+        <option value="false">No</option>
+      </select>
+    </div>
+    
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button onclick="saveBouquet()" class="btn btn-success" style="flex:1">Save Bouquet</button>
+      <button onclick="closeAddBouquetModal()" class="btn btn-danger" style="flex:1">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Order Details Modal -->
+<div id="orderDetailsModal" class="modal">
+ <div class="modal-content" style="
+    width:90%;
+    max-width:900px;
+    max-height:90vh;
+    overflow-y:auto;
+    padding:20px;
+">
+    <div class="modal-header">
+      <h3 id="orderDetailsTitle">Order Details</h3>
+      <button class="close-modal" onclick="closeOrderDetailsModal()">&times;</button>
+    </div>
+    <div id="orderDetailsContent" class="order-details"></div>
+    
+      <!-- Order details will appear here -->
+
+   </div><div id="orderDetailsContent" class="order-details">
+    <div id="updateStatusModal" class="modal"></div>
+    <div id="updateStatusSection" style="display:none;margin-top:20px;padding:15px;background:#f8f9fa;border-radius:6px"></div>
+    <h4>Update Order Status</h4>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="modalOrderStatus">
+          <option value="Placed">Placed</option>
+          <option value="Processing">Processing</option>
+          <option value="Shipped">Shipped</option>
+          <option value="Delivered">Delivered</option>
+          <option value="Cancelled">Cancelled</option>
+        </select></div>
+      
+      <div class="form-group">
+        <label>Delivery Date (if delivered)</label>
+        <input type="date" id="deliveryDate">
+      </div>
+      <div class="form-group">
+        <label>Progress Notes</label>
+        <textarea id="progressNotes" placeholder="Add progress updates, tracking info, etc." rows="3"></textarea>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:15px">
+        <button onclick="updateOrderStatusFromModal()" class="btn btn-success" style="flex:1">Update Status</button>
+        <button onclick="closeOrderDetailsModal()" class="btn" style="flex:1">Cancel</button>
+      </div>
+      </div>
+  </div>
+</div>
+
+<!-- Photo Preview Modal -->
+<div id="photoModal" class="photo-modal">
+  <div class="photo-modal-content">
+    <img id="modalPhoto" alt="Photo Preview">
+    <button onclick="closePhotoModal()" style="position:absolute;top:-30px;right:0;background:none;border:none;color:white;font-size:24px;cursor:pointer">
+      &times;
+    </button>
+    <button onclick="downloadCurrentPhoto()" style="position:absolute;top:10px;right:10px;background:#28a745;color:white;border:none;padding:8px 12px;border-radius:4px;cursor:pointer">
+      ⬇ Download
+    </button>
+    <div class="photo-modal-info">
+      <div id="modalPhotoInfo"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Simple admin auth */
+const ADMIN_USER = 'dilshad';
+const ADMIN_PASS = '7605';
+const API_BASE = '';
+
+if (!sessionStorage.getItem('adminAuth')) {
+
+    const u = prompt("Enter Admin Username");
+
+    if (u === null) {
+        document.body.innerHTML = "<h2 style='text-align:center;margin-top:50px;'>Access Cancelled</h2>";
+        throw new Error("Login cancelled");
+    }
+
+    const p = prompt("Enter Admin Password");
+
+    if (p === null) {
+        document.body.innerHTML = "<h2 style='text-align:center;margin-top:50px;'>Access Cancelled</h2>";
+        throw new Error("Login cancelled");
+    }
+
+    if (u.trim() === ADMIN_USER && p === ADMIN_PASS) {
+        sessionStorage.setItem("adminAuth", "1");
+    } else {
+        alert("Invalid Username or Password");
+        document.body.innerHTML =
+            "<h2 style='text-align:center;margin-top:50px;color:red;'>Access Denied</h2>";
+        throw new Error("Authentication failed");
+    }
+}
+// Image upload variables
+let uploadedImageData = '';
+let allOrders = [];
+let allUsers = {};
+let currentOrderId = '';
+let editingProduct = null;
+
+/* Tab Management */
+function showTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.display = 'inline-block';
+    });
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    // Show selected tab
+    const target = event ? event.target : document.querySelector(`[onclick*="showTab('${tabName}')"]`);
+    if (target) target.classList.add('active');
+    
+    const tabElement = document.getElementById(tabName + 'TabContent') || document.getElementById(tabName + 'Tab');
+    if (tabElement) tabElement.classList.add('active');
+    
+    // Load tab content
+    if (tabName === 'orders') fetchDatabaseOrders();
+    if (tabName === 'photos') { loadProducts(); }
+    if (tabName === 'bouquets') loadBouquetProducts();
+    if (tabName === 'userOrders') {
+        // Already loaded when user clicked
+    }
+}
+
+/* ============ PRODUCT MANAGEMENT ============ */
+
+async function loadProducts() {
+    try {
+        const response = await fetch('/api/products');
+        const products = await response.json();
+        
+        const productList = document.getElementById('productList');
+        
+        if (!products || products.length === 0) {
+            productList.innerHTML = `
+                <div style="text-align:center;padding:40px;color:#666;">
+                    <div style="font-size:48px;margin-bottom:20px;">📦</div>
+                    <h3>No Products Added Yet</h3>
+                    <p class="small">Add your first product using the form above.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const grid = document.createElement('div');
+        grid.className = 'product-grid';
+        
+        products.forEach(product => {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            
+            // Build image URL
+            let imageUrl = 'https://via.placeholder.com/300x200/FFB6C1/000?text=Product';
+            if (product.image) {
+                if (product.image.startsWith('data:') || product.image.startsWith('/uploads/')) {
+                    imageUrl = product.image;
+                } else if (product.image.startsWith('http')) {
+                    imageUrl = product.image;
+                } else {
+                    imageUrl = `/uploads/${product.image}`;
+                }
+            }
+            
+            card.innerHTML = `
+                <img src="${imageUrl}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/300x200/FFB6C1/000?text=Product'">
+                <div class="product-info">
+                    <div class="product-name">${product.name}</div>
+                    <div class="small" style="color:#666;margin-bottom:5px;">${product.description || ''}</div>
+                    <div class="product-price">₹${product.price}</div>
+                    <div class="small">Stock: ${product.stock || 0} units</div>
+                </div>
+                <div class="product-actions">
+                    <button onclick="editProduct('${product.id}')" class="btn btn-warning" style="padding:5px 10px;font-size:12px;">
+                        ✏ Edit
+                    </button>
+                    <button onclick="deleteProduct('${product.id}')" class="btn btn-danger" style="padding:5px 10px;font-size:12px;">
+                        🗑 Delete
+                    </button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+        
+        productList.innerHTML = '';
+        productList.appendChild(grid);
+        
+    } catch (error) {
+        console.error('Error loading products:', error);
+        document.getElementById('productList').innerHTML = `
+            <div class="error">Failed to load products: ${error.message}</div>
+        `;
+    }
+}
+
+async function saveProduct() {
+    if (editingProduct) {
+        await updateProduct();
+    } else {
+        await addProduct();
+    }
+}
+
+async function addProduct() {
+    const name = document.getElementById('productName').value.trim();
+    const description = document.getElementById('productDescription').value.trim();
+    const price = document.getElementById('productPrice').value;
+    const stock = document.getElementById('productStock').value;
+    const imageFile = document.getElementById('productImage').files[0];
+
+    if (!name || !price || !stock) {
+        alert('Please fill in required fields: Name, Price, and Stock');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('description', description);
+    formData.append('price', price);
+    formData.append('stock', stock);
+    if (imageFile) {
+        formData.append('image', imageFile);
+    }
+
+    try {
+        const response = await fetch('/api/products/add', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert('Product added successfully!');
+            cancelEdit();
+            loadProducts();
+        } else {
+            alert(data.error || 'Failed to add product');
+        }
+    } catch (error) {
+        console.error('Error adding product:', error);
+        alert('Failed to add product: ' + error.message);
+    }
+}
+
+function cancelEdit() {
+    editingProduct = null;
+    document.getElementById('editProductId').value = '';
+    document.getElementById('productName').value = '';
+    document.getElementById('productDescription').value = '';
+    document.getElementById('productPrice').value = '';
+    document.getElementById('productStock').value = '';
+    document.getElementById('productImage').value = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function editProduct(id) {
+    // Fetch product details
+    fetch(`/api/products/${id}`)
+        .then(res => res.json())
+        .then(product => {
+            editingProduct = id;
+            document.getElementById('editProductId').value = id;
+            document.getElementById('productName').value = product.name;
+            document.getElementById('productDescription').value = product.description || '';
+            document.getElementById('productPrice').value = product.price;
+            document.getElementById('productStock').value = product.stock;
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // Show that we're editing
+            document.querySelector('#photosTab .card h2').textContent = 'Edit Product';
+        })
+        .catch(error => {
+            console.error('Error fetching product:', error);
+            alert('Failed to load product details');
+        });
+}
+
+async function updateProduct() {
+    const id = editingProduct;
+    const name = document.getElementById('productName').value.trim();
+    const description = document.getElementById('productDescription').value.trim();
+    const price = document.getElementById('productPrice').value;
+    const stock = document.getElementById('productStock').value;
+    const imageFile = document.getElementById('productImage').files[0];
+
+    if (!name || !price || !stock) {
+        alert('Please fill in required fields: Name, Price, and Stock');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('description', description);
+    formData.append('price', price);
+    formData.append('stock', stock);
+    if (imageFile) {
+        formData.append('image', imageFile);
+    }
+
+    try {
+        const response = await fetch(`/api/products/${id}`, {
+            method: 'PUT',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert('Product updated successfully!');
+            editingProduct = null;
+            document.querySelector('#photosTab .card h2').textContent = 'Add / Edit Product';
+            cancelEdit();
+            loadProducts();
+        } else {
+            alert(data.error || 'Failed to update product');
+        }
+    } catch (error) {
+        console.error('Error updating product:', error);
+        alert('Failed to update product: ' + error.message);
+    }
+}
+
+async function deleteProduct(id) {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+    
+    try {
+        const response = await fetch(`/api/products/${id}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Product deleted successfully!');
+            loadProducts();
+        } else {
+            alert(data.error || 'Failed to delete product');
+        }
+    } catch (error) {
+        console.error('Error deleting product:', error);
+        alert('Failed to delete product: ' + error.message);
+    }
+}
+
+/* ============ END PRODUCT MANAGEMENT ============ */
+
+/* Fetch orders from database API */
+async function fetchDatabaseOrders() {
+    try {
+        const response = await fetch("orders.json"); // your JSON file
+        const orders = await response.json();
+
+        allOrders = orders;
+
+        updateStats(allOrders);
+        groupOrdersByUser(allOrders);
+        displayAllOrders(allOrders);
+
+    } catch (err) {
+        console.error(err);
+        document.getElementById("ordersList").innerHTML =
+            "<div class='error'>Cannot load orders.json</div>";
+    }
+}
+
+/* Group orders by user */
+function groupOrdersByUser(orders) {
+    allUsers = {};
+    
+    orders.forEach(order => {
+        const userEmail = order.userEmail || 'Guest Customer';
+        
+        if (!allUsers[userEmail]) {
+            allUsers[userEmail] = {
+                email: userEmail,
+                orders: [],
+                totalOrders: 0,
+                totalSpent: 0,
+                whatsappNumber: order.whatsappNumber || 'Not provided'
+            };
+        }
+        allUsers[userEmail].orders.push(order);
+        allUsers[userEmail].totalOrders++;
+        allUsers[userEmail].totalSpent += order.total || 0;
+    });
+
+    // Display users
+    displayUsersList();
+}
+
+/* Display users list */
+function displayUsersList() {
+    const usersDiv = document.getElementById('usersList');
+    usersDiv.innerHTML = '';
+    
+    const userArray = Object.values(allUsers).sort((a, b) => b.totalOrders - a.totalOrders);
+    
+    if (userArray.length === 0) {
+        usersDiv.innerHTML = '<div class="small">No users found</div>';
+        return;
+    }
+    
+    userArray.forEach(user => {
+        const udiv = document.createElement('div');
+        udiv.className = 'userRow';
+        udiv.innerHTML = `
+            <div><strong>${user.email}</strong></div>
+            <div class="small">${user.totalOrders} orders • ₹${user.totalSpent}</div>
+            <div class="small">📱 ${user.whatsappNumber || 'No WhatsApp'}</div>
+        `;
+        udiv.onclick = () => showUserOrders(user.email, user.orders);
+        usersDiv.appendChild(udiv);
+    });
+}
+
+/* Show user-specific orders */
+function showUserOrders(userEmail, userOrders) {
+    // Hide other tabs, show user orders tab
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('userOrdersTab').classList.add('active');
+    document.getElementById('userOrdersTab').style.display = 'inline-block';
+    
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.getElementById('userOrdersTabContent').classList.add('active');
+    
+    // Update title
+    document.getElementById('userOrdersTitle').textContent = `Orders for: ${userEmail}`;
+    
+    // Display user orders
+    const userOrdersList = document.getElementById('userOrdersList');
+    userOrdersList.innerHTML = '';
+    
+    if (userOrders.length === 0) {
+        userOrdersList.innerHTML = '<div class="small">No orders found for this user.</div>';
+        return;
+    }
+    
+    // Sort by date (newest first)
+    userOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    // Separate active and completed orders
+    const activeOrders = userOrders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled');
+    const completedOrders = userOrders.filter(o => o.status === 'Delivered' || o.status === 'Cancelled');
+    
+    if (activeOrders.length > 0) {
+        userOrdersList.innerHTML += '<h4>Active Orders</h4>';
+        activeOrders.forEach(order => {
+            const orderDiv = document.createElement('div');
+            orderDiv.className = 'order-details';
+            orderDiv.style.marginBottom = '15px';
+            orderDiv.innerHTML = buildOrderCardHtml(order);
+            userOrdersList.appendChild(orderDiv);
+        });
+    }
+    
+    if (completedOrders.length > 0) {
+        userOrdersList.innerHTML += '<div class="completed-section"><div class="completed-header"><h4>✅ Completed Orders</h4></div>';
+        completedOrders.forEach(order => {
+            const orderDiv = document.createElement('div');
+            orderDiv.className = 'order-details';
+            orderDiv.style.marginBottom = '15px';
+            orderDiv.style.opacity = '0.8';
+            orderDiv.innerHTML = buildOrderCardHtml(order);
+            userOrdersList.appendChild(orderDiv);
+        });
+        userOrdersList.innerHTML += '</div>';
+    }
+}
+
+
+/* Display all orders with SCROLL and completed section */
+function displayAllOrders(orders) {
+    const ordersList = document.getElementById('ordersList');
+    const completedSection = document.getElementById('completedOrdersSection');
+    const completedOrdersList = document.getElementById('completedOrdersList');
+    ordersList.innerHTML = '';
+    // Sort by date (newest first)
+      orders.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    // Separate active and completed orders
+      const activeOrders = orders.filter(order => {
+
+        const status = order.status || "Placed";
+
+        return (
+            status !== "Delivered" &&
+            status !== "Cancelled" &&
+            order.hiddenFromAdmin !== true
+        );
+
+    });
+    const completedOrders = orders.filter(o => o.status === 'Delivered' || o.status === 'Cancelled');
+    
+    // Display active orders with SCROLL container
+    
+    
+   if(activeOrders.length===0){
+
+        ordersList.innerHTML="<div class='small'>No Active Orders</div>";
+
+        return;
+
+    } else {
+        // Create scrollable container
+        const scroll = document.createElement('div');
+        scroll.className = 'orders-scroll-container';
+        
+        activeOrders.forEach((order, index) => {
+            const d = document.createElement('div');
+            const div = document.createElement('div');
+            d.style.borderBottom = '1px solid #eee';
+            d.style.padding = '10px';
+            div.style.border="1px solid #ddd";
+        div.style.borderRadius="8px";
+        div.style.padding="12px";
+        div.style.marginBottom="12px";
+        div.style.background="#fff";
+            
+            const userEmail = order.userEmail || 'Guest Customer';
+            const status = order.status || 'Placed';
+            const itemCount=Array.isArray(order.items)
+            ? order.items.length
+            : 0;
+            const total=order.total || 0;
+      
+             div.innerHTML=`
+
+        <div style="display:flex;justify-content:space-between;align-items:center">
+
+            <div>
+
+                <b>Order #${order.orderId}</b><br>
+
+                <span class="small">
+
+                    ${new Date(order.createdAt || Date.now()).toLocaleString()}
+
+                </span>
+
+            </div>
+
+            <span class="status status-${status.toLowerCase()}">
+
+                ${status}
+
+            </span>
+
+        </div>
+
+        <hr>
+
+        <div>
+
+            <b>${userEmail}</b>
+
+        </div>
+
+        <div class="small">
+
+            Items : ${itemCount}
+
+        </div>
+
+        <div>
+
+            <b>Total : ₹${total}</b>
+
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+
+            <button class="btn"
+onclick="viewOrderDetails('${order.orderId}')">
+📄 View Details
+</button>
+
+           <button class="btn btn-warning"
+onclick="quickUpdateStatus('${order.orderId}')">
+🔄 Update Status
+</button>
+
+        </div>
+
+        `;
+
+        scroll.appendChild(div);
+
+    });
+
+    ordersList.appendChild(scroll);
+
+}
+    
+
+}
+
+/* View order details in modal */
+async function viewOrderDetails(orderId){
+
+    currentOrderId = orderId;
+
+    const order = allOrders.find(o => o.orderId === orderId);
+
+    if(!order){
+        alert("Order Not Found");
+        return;
+    }
+
+    // Hide update section
+    document.getElementById("updateStatusSection").style.display = "none";
+
+    document.getElementById("orderDetailsTitle").innerHTML =
+        "Order #" + order.orderId;
+
+    document.getElementById("orderDetailsContent").innerHTML =
+        buildOrderDetailsHtml(order);
+
+    document.getElementById("orderDetailsModal").style.display = "block";
+
+}
+async function quickUpdateStatus(orderId){
+
+    currentOrderId = orderId;
+
+    const order = allOrders.find(o => o.orderId === orderId);
+
+    if(!order){
+        alert("Order Not Found");
+        return;
+    }
+
+    // Show update section
+    document.getElementById("updateStatusSection").style.display = "block";
+
+    document.getElementById("orderDetailsTitle").innerHTML =
+        "Update Order #" + order.orderId;
+
+    document.getElementById("orderDetailsContent").innerHTML =
+        `<div>
+            <b>Customer :</b> ${order.userEmail || "Guest Customer"}<br><br>
+
+            <b>Order :</b> ${order.orderId}<br><br>
+
+            <b>Total :</b> ₹${order.total}<br><br>
+
+            <b>Items :</b> ${
+                Array.isArray(order.items)
+                    ? order.items.length
+                    : 0
+            }
+        </div>`;
+
+    document.getElementById("modalOrderStatus").value =
+        order.status || "Placed";
+
+    document.getElementById("progressNotes").value =
+        order.progressNotes || "";
+
+    document.getElementById("deliveryDate").value =
+        order.deliveryDate
+            ? order.deliveryDate.substring(0,10)
+            : "";
+
+    document.getElementById("orderDetailsModal").style.display = "block";
+
+}
+/* Update order status from modal */
+async function updateOrderStatusFromModal() {
+    try {
+        const status = document.getElementById('modalOrderStatus').value;
+        const deliveryDate = document.getElementById('deliveryDate').value;
+        const progressNotes = document.getElementById('progressNotes').value;
+        
+        const updateData = {
+            status: status,
+            deliveryDate: deliveryDate || null,
+            progressNotes: progressNotes || ''
+        };
+        
+        console.log(`📤 Updating order ${currentOrderId}:`, updateData);
+        
+        const response = await fetch(`/api/admin/orders/${currentOrderId}/status`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updateData)
+        });
+        
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('❌ Server returned non-JSON response:', text.substring(0, 200));
+            throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.error || `Failed to update status: ${response.status}`);
+        }
+        
+        if (result.success) {
+            alert(`✅ Order ${currentOrderId} status updated to: ${status}`);
+            
+            // Update in local array
+            const orderIndex = allOrders.findIndex(o => o.orderId === currentOrderId);
+            if (orderIndex !== -1) {
+                allOrders[orderIndex].status = status;
+                if (deliveryDate) allOrders[orderIndex].deliveryDate = deliveryDate;
+                if (progressNotes) allOrders[orderIndex].progressNotes = progressNotes;
+            }
+            
+            closeOrderDetailsModal();
+            fetchDatabaseOrders();
+        } else {
+            throw new Error(result.error || 'Failed to update status');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error updating order status:', error);
+        alert(`Failed to update order status: ${error.message}`);
+    }
+}
+
+/* NEW: Hide order from admin (not delete) */
+async function hideOrderFromAdmin(orderId) {
+  if (!confirm('Hide this order from admin view?\n\n✅ Customer will still see it\n✅ Order remains in database\n✅ Can be used for reordering')) return;
+  
+  try {
+    console.log(`👁️ Hiding order: ${orderId}`);
+    
+    const response = await fetch(`/api/admin/orders/${orderId}/hide`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('❌ Server returned non-JSON response:', text.substring(0, 200));
+      throw new Error(`Server error: ${response.status} ${response.statusText}`);
+    }
+    
+    const result = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(result.error || `Failed to hide order: ${response.status}`);
+    }
+    
+    if (result.success) {
+      alert(`✅ Order ${orderId} hidden from admin view!\n\nCustomer can still see it for reordering.`);
+      fetchDatabaseOrders(); // Refresh the orders list
+    } else {
+      throw new Error(result.error || 'Failed to hide order');
+    }
+    
+  } catch (error) {
+    console.error('❌ Error hiding order:', error);
+    alert(`Failed to hide order: ${error.message}`);
+  }
+}
+
+/* NEW: Show hidden orders */
+async function showHiddenOrders() {
+  try {
+    const response = await fetch('/api/admin/orders/hidden');
+    const result = await response.json();
+    
+    if (result.success) {
+      const hiddenOrders = result.orders || [];
+      
+      let html = `
+        <div style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+            background:white; padding:20px; border-radius:10px; z-index:9999;
+            max-width:800px; width:90%; max-height:80vh; overflow-y:auto;
+            box-shadow:0 0 20px rgba(0,0,0,0.3);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+          <h3 style="margin:0;">Hidden Orders (${hiddenOrders.length})</h3>
+          <button onclick="this.parentElement.parentElement.remove()" style="background:none; border:none; font-size:24px; cursor:pointer;">&times;</button>
+        </div>
+      `;
+      
+      if (hiddenOrders.length === 0) {
+        html += '<p>No hidden orders found.</p>';
+      } else {
+        hiddenOrders.forEach(order => {
+          html += `
+            <div style="border:1px solid #ddd; padding:10px; margin:5px; border-radius:6px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <strong>${order.orderId}</strong><br>
+                  <small>${order.userEmail}</small>
+                </div>
+                <div>
+                  <span class="status status-${order.status.toLowerCase()}">${order.status}</span>
+                </div>
+              </div>
+              <div>Total: ₹${order.total} • Items: ${order.items?.length || 0}</div>
+              <div>Date: ${new Date(order.createdAt).toLocaleDateString()}</div>
+              <div style="margin-top:10px; display:flex; gap:10px;">
+                <button onclick="unhideOrder('${order.orderId}')" class="btn">Restore to Admin View</button>
+                <button onclick="permanentlyDeleteOrder('${order.orderId}')" class="btn btn-danger">🗑️ Delete Permanently</button>
+              </div>
+            </div>
+          `;
+        });
+      }
+      
+      html += '</div>';
+      
+      const modal = document.createElement('div');
+      modal.innerHTML = html;
+      document.body.appendChild(modal);
+    }
+  } catch (error) {
+    console.error('Error loading hidden orders:', error);
+    alert('Failed to load hidden orders: ' + error.message);
+  }
+}
+
+/* NEW: Unhide order */
+async function unhideOrder(orderId) {
+  try {
+    const response = await fetch(`/api/admin/orders/${orderId}/unhide`, {
+      method: 'PUT'
+    });
+    const result = await response.json();
+    
+    if (result.success) {
+      alert(`Order ${orderId} restored to admin view`);
+      document.querySelector('div[style*="position:fixed"]')?.remove();
+      fetchDatabaseOrders();
+    }
+  } catch (error) {
+    console.error('Error unhiding order:', error);
+    alert('Failed to unhide order: ' + error.message);
+  }
+}
+
+/* Clear ALL orders from database - SIMPLE VERSION */
+async function clearAllOrders() {
+    if (!confirm('⚠️ WARNING: Are you SURE you want to DELETE ALL ORDERS?\n\nThis will permanently remove ALL orders from the database and cannot be undone!')) {
+        return;
+    }
+    
+    try {
+        // Show loading
+        const ordersList = document.getElementById('ordersList');
+        ordersList.innerHTML = '<div class="loading">Clearing all orders...</div>';
+        
+        const response = await fetch('/api/admin/orders/clear-all', {
+            method: 'DELETE'
+        });
+        
+      const contentType = response.headers.get('content-type');
+
+if (!contentType || !contentType.includes('application/json')) {
+    const text = await response.text();
+    console.error('Server Response:', text);
+    throw new Error(`Server Error: ${response.status} ${response.statusText}`);
+}
+
+const result = await response.json();
+
+if (!response.ok) {
+    throw new Error(result.error || `Failed (${response.status})`);
+}
+
+if (result.success) {
+    alert(`✅ All orders cleared successfully! ${result.deletedCount || 0} orders deleted.`);
+    fetchDatabaseOrders();
+} else {
+    throw new Error(result.error || 'Failed to clear orders');
+} 
+        
+    } catch (error) {
+        console.error('❌ Error clearing orders:', error);
+        alert('Failed to clear orders: ' + error.message);
+    }
+}
+
+/* Permanent delete */
+async function permanentlyDeleteOrder(orderId) {
+  if (!confirm('⚠️ PERMANENT DELETE ⚠️\n\nAre you sure you want to PERMANENTLY DELETE this order?\n\n❌ Customer will lose order history\n❌ Cannot be recovered\n❌ Removed from database')) return;
+
+  try {
+    console.log(`🗑️ Permanently deleting order: ${orderId}`);
+
+    const response = await fetch(`/api/admin/orders/${orderId}`, {
+      method: 'DELETE'
+    });
+
+    const contentType = response.headers.get('content-type');
+
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Server Response:', text);
+      throw new Error(`Server Error: ${response.status} ${response.statusText}`);
+    }
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || `Failed (${response.status})`);
+    }
+
+    if (result.success) {
+      alert(`✅ Order ${orderId} permanently deleted.`);
+      fetchDatabaseOrders();
+    } else {
+      throw new Error(result.error || 'Delete failed');
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
+  }
+}
+
+/* Build order details HTML */
+function buildOrderDetailsHtml(order) {
+    const userEmail = order.userEmail || 'Guest Customer';
+    const orderDate = new Date(order.createdAt).toLocaleString();
+    const status = order.status || 'Placed';
+    
+    let html = `
+        <div style="margin-bottom:15px">
+            <div><strong>Order ID:</strong> ${order.orderId}</div>
+            <div><strong>Date:</strong> ${orderDate}</div>
+            <div><strong>Customer:</strong> ${userEmail}</div>
+            <div><strong>WhatsApp:</strong> ${order.whatsappNumber || 'Not provided'}</div>
+            <div><strong>Status:</strong> <span class="status status-${status.toLowerCase()}">${status}</span></div>
+            ${order.deliveryDate ? `<div><strong>Delivery Date:</strong> ${new Date(order.deliveryDate).toLocaleDateString()}</div>` : ''}
+            ${order.progressNotes ? `<div><strong>Progress Notes:</strong> ${order.progressNotes}</div>` : ''}
+        </div>
+        
+        <div style="margin-bottom:15px">
+            <div><strong>Payment:</strong> ${order.paymentMethod || 'Not specified'}</div>
+            <div><strong>Delivery:</strong> ${order.fulfill === 'delivery' ? '🚚 Delivery' : '🏪 Pickup'}</div>
+            ${order.notes ? `<div><strong>Customer Notes:</strong> ${order.notes}</div>` : ''}
+        </div>
+    `;
+    
+    // Address if available
+    if (order.address) {
+        html += `
+            <div style="margin-bottom:15px; padding:10px; background:#f0f8ff; border-radius:6px;">
+                <strong>Delivery Address:</strong><br>
+                ${order.address.name || ''}<br>
+                ${order.address.street || ''}<br>
+                ${order.address.city || ''} - ${order.address.pincode || ''}<br>
+                Phone: ${order.address.phone || ''}
+            </div>
+        `;
+    }
+    
+    // Items
+    if (order.items && order.items.length > 0) {
+        html += '<div><strong>Items:</strong></div>';
+        order.items.forEach((item, index) => {
+            // Handle image display
+            let imageSrc = item.image || '';
+            let hasValidImage = false;
+            
+            if (imageSrc) {
+                if (imageSrc.startsWith('data:image')) {
+                    hasValidImage = true;
+                } else if (imageSrc.startsWith('http') || imageSrc.startsWith('/')) {
+                    hasValidImage = true;
+                } else if (imageSrc.includes('base64')) {
+                    hasValidImage = true;
+                    if (!imageSrc.startsWith('data:')) {
+                        imageSrc = 'data:image/jpeg;base64,' + imageSrc;
+                    }
+                }
+            }
+            
+            html += `
+                <div class="order-item-detail">
+                    ${hasValidImage ? 
+                        `<img src="${imageSrc}" class="order-item-img" alt="${item.name}" 
+                             onerror="this.src='photo/placeholder.jpg'">` : 
+                        `<div class="order-item-img" style="background:#ddd; display:flex; align-items:center; justify-content:center; color:#666;">
+                            No Image
+                        </div>`}
+                    <div style="flex:1">
+                        <div><strong>${item.name}</strong></div>
+                        <div class="small">
+                            Type: ${item.type || 'General'} • 
+                            Qty: ${item.qty || 1} • 
+                            ₹${item.priceEach || item.price} each
+                        </div>
+                        <div class="small">
+                            ${item.size ? `Size: ${item.size} • ` : ''}
+                            ${item.color ? `Color: ${item.color} • ` : ''}
+                            ${item.frameColor ? `Frame: ${item.frameColor} • ` : ''}
+                            Total: ₹${item.price || 0}
+                        </div>
+                        ${hasValidImage ? 
+                            `<button onclick="viewPhoto('${encodeURIComponent(imageSrc)}', '${item.name.replace(/'/g, "\\'")}', '${order.orderId}')" 
+                                style="background:#1e90ff;color:white;border:none;padding:4px 8px;border-radius:4px;margin-top:5px;font-size:11px;cursor:pointer;">
+                                View Photo
+                            </button>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    // Totals
+    html += `
+        <div style="margin-top:15px; padding:10px; background:#f8f9fa; border-radius:6px;">
+            <div style="display:flex; justify-content:space-between;">
+                <div>Subtotal:</div>
+                <div>₹${order.subtotal || 0}</div>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <div>Delivery Charge:</div>
+                <div>₹${order.deliveryCharge || 0}</div>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:18px; margin-top:5px;">
+                <div>Total:</div>
+                <div>₹${order.total || 0}</div>
+            </div>
+        </div>
+    `;
+    
+    // Notifications status
+    if (order.whatsappSent || order.emailSent) {
+        html += '<div style="margin-top:10px; font-size:12px;">';
+        if (order.whatsappSent) {
+            html += `<span style="color:#25D366;">✓ WhatsApp sent ${order.whatsappHasImage ? 'with image' : ''}</span> `;
+        }
+        if (order.emailSent) {
+            html += `<span style="color:#1e90ff;">✓ Email sent</span>`;
+        }
+        html += '</div>';
+    }
+    
+    return html;
+}
+
+/* Close order details modal */
+function closeOrderDetailsModal() {
+    document.getElementById('orderDetailsModal').style.display = 'none';
+    currentOrderId = '';
+}
+
+/* Update statistics */
+function updateStats(orders) {
+    const totalOrders = orders.length;
+    const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+    const activeOrders = orders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled').length;
+    const completedOrders = orders.filter(o => o.status === 'Delivered' || o.status === 'Cancelled').length;
+
+    document.getElementById('statsArea').innerHTML = `
+        <div class="stat-item">
+            <div class="stat-number">${totalOrders}</div>
+            <div class="stat-label">Total Orders</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">₹${totalRevenue}</div>
+            <div class="stat-label">Total Revenue</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">${activeOrders}</div>
+            <div class="stat-label">Active</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">${completedOrders}</div>
+            <div class="stat-label">Completed</div>
+        </div>
+    `;
+}
+
+/* Image Upload Functions */
+function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Check file size (2MB limit)
+    if (file.size > 2 * 1024 * 1024) {
+        alert('File size too large. Please select an image under 2MB.');
+        return;
+    }
+    
+    // Check file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+        alert('Please select a valid image file (JPEG, PNG, GIF).');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        uploadedImageData = e.target.result;
+        document.getElementById('imagePreview').src = uploadedImageData;
+        document.getElementById('imagePreview').style.display = 'block';
+        document.getElementById('removeImageBtn').style.display = 'inline-block';
+        document.getElementById('imageUploadArea').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeImage() {
+    uploadedImageData = '';
+    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('removeImageBtn').style.display = 'none';
+    document.getElementById('imageUploadArea').style.display = 'block';
+    document.getElementById('imageFile').value = '';
+}
+
+/* Bouquet Products Management */
+function loadBouquetProducts() {
+    let bouquets = JSON.parse(localStorage.getItem('bouquetProducts') || '[]');
+    const bouquetsList = document.getElementById('bouquetsList');
+    
+    if (bouquets.length === 0) {
+        // Add some default bouquets
+        bouquets = [
+            {
+                id: 'BQT1',
+                name: 'Rose Special Bouquet',
+                price: 350,
+                description: 'Beautiful red roses bouquet',
+                image: 'photo/b1.png',
+                category: 'Rose',
+                featured: true
+            },
+            {
+                id: 'BQT2',
+                name: 'Mixed Flowers Bouquet',
+                price: 450,
+                description: 'Assorted seasonal flowers',
+                image: 'photo/b2.png',
+                category: 'Mixed',
+                featured: true
+            },
+            {
+                id: 'BQT3',
+                name: 'Lily Elegance Bouquet',
+                price: 500,
+                description: 'Elegant white lilies arrangement',
+                image: 'photo/b2.png',
+                category: 'Lily',
+                featured: false
+            }
+        ];
+        localStorage.setItem('bouquetProducts', JSON.stringify(bouquets));
+    }
+    
+    // Group by category
+    const byCategory = {};
+    bouquets.forEach(b => {
+        if (!byCategory[b.category]) byCategory[b.category] = [];
+        byCategory[b.category].push(b);
+    });
+    
+    bouquetsList.innerHTML = '';
+    
+    Object.keys(byCategory).sort().forEach(category => {
+        const categoryDiv = document.createElement('div');
+        categoryDiv.innerHTML = `<h4 style="margin:15px 0 10px 0; color:#333; padding-left:10px; border-left:4px solid #1e90ff;">${category}</h4>`;
+        
+        const grid = document.createElement('div');
+        grid.className = 'bouquet-grid';
+        
+        byCategory[category].forEach(bouquet => {
+            const card = document.createElement('div');
+            card.className = 'bouquet-card';
+            card.style.position = 'relative';
+            
+            // Featured badge
+            if (bouquet.featured) {
+                card.innerHTML += `<div style="position:absolute;top:10px;left:10px;background:#ffc107;color:#000;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:bold;">⭐ Featured</div>`;
+            }
+            
+            card.innerHTML += `
+                <img src="${bouquet.image}" alt="${bouquet.name}" 
+                     onerror="this.src='https://via.placeholder.com/300x200/FFB6C1/000?text=Bouquet'">
+                <div class="bouquet-info">
+                    <div class="bouquet-name">${bouquet.name}</div>
+                    <div class="small" style="color:#666; margin-bottom:5px; min-height:40px;">${bouquet.description || 'No description'}</div>
+                    <div class="bouquet-price">₹${bouquet.price}</div>
+                </div>
+                <div class="bouquet-actions">
+                    <button onclick="editBouquet('${bouquet.id}')" class="btn btn-warning" style="padding:5px 10px; font-size:12px; width:48%">Edit</button>
+                    <button onclick="deleteBouquet('${bouquet.id}')" class="btn btn-danger" style="padding:5px 10px; font-size:12px; width:48%">Delete</button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+        
+        categoryDiv.appendChild(grid);
+        bouquetsList.appendChild(categoryDiv);
+    });
+    
+    // Add empty state if no bouquets
+    if (bouquets.length === 0) {
+        bouquetsList.innerHTML = `
+            <div style="text-align:center;padding:40px;color:#666;">
+                <div style="font-size:48px;margin-bottom:20px;">💐</div>
+                <h3>No Bouquets Added Yet</h3>
+                <p class="small">Click the "Add Bouquet" button to create your first bouquet product.</p>
+                <button onclick="openAddBouquetModal()" class="btn btn-success" style="margin-top:20px;">+ Add Your First Bouquet</button>
+            </div>
+        `;
+    }
+}
+
+/* Bouquet Modal Functions */
+function openAddBouquetModal() {
+    document.getElementById('addBouquetModal').style.display = 'block';
+    // Clear form
+    document.getElementById('bouquetName').value = '';
+    document.getElementById('bouquetPrice').value = '350';
+    document.getElementById('bouquetDesc').value = '';
+    document.getElementById('bouquetCategory').value = 'Rose';
+    document.getElementById('bouquetFeatured').value = 'true';
+    
+    // Reset image
+    uploadedImageData = '';
+    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('removeImageBtn').style.display = 'none';
+    document.getElementById('imageUploadArea').style.display = 'block';
+    document.getElementById('imageFile').value = '';
+    
+    // Set save button to add mode
+    const saveBtn = document.querySelector('#addBouquetModal .btn-success');
+    saveBtn.textContent = 'Save Bouquet';
+    saveBtn.onclick = saveBouquet;
+}
+
+function closeAddBouquetModal() {
+    document.getElementById('addBouquetModal').style.display = 'none';
+}
+
+function saveBouquet() {
+    const name = document.getElementById('bouquetName').value.trim();
+    const price = document.getElementById('bouquetPrice').value;
+    const desc = document.getElementById('bouquetDesc').value.trim();
+    const category = document.getElementById('bouquetCategory').value;
+    const featured = document.getElementById('bouquetFeatured').value === 'true';
+    
+    if (!name || !price) {
+        alert('Please fill in required fields: Name and Price');
+        return;
+    }
+    
+    if (!uploadedImageData) {
+        alert('Please upload an image for the bouquet');
+        return;
+    }
+    
+    const bouquets = JSON.parse(localStorage.getItem('bouquetProducts') || '[]');
+    const newBouquet = {
+        id: 'BQT' + Date.now(),
+        name: name,
+        price: parseInt(price),
+        description: desc,
+        image: uploadedImageData, // Save as base64
+        category: category,
+        featured: featured,
+        createdAt: new Date().toISOString()
+    };
+    
+    bouquets.push(newBouquet);
+    localStorage.setItem('bouquetProducts', JSON.stringify(bouquets));
+    
+    closeAddBouquetModal();
+    loadBouquetProducts();
+    alert('Bouquet added successfully!');
+}
+
+function editBouquet(bouquetId) {
+    const bouquets = JSON.parse(localStorage.getItem('bouquetProducts') || '[]');
+    const bouquet = bouquets.find(b => b.id === bouquetId);
+    
+    if (!bouquet) return;
+    
+    document.getElementById('bouquetName').value = bouquet.name;
+    document.getElementById('bouquetPrice').value = bouquet.price;
+    document.getElementById('bouquetDesc').value = bouquet.description || '';
+    document.getElementById('bouquetCategory').value = bouquet.category;
+    document.getElementById('bouquetFeatured').value = bouquet.featured ? 'true' : 'false';
+    
+    // Handle image (could be URL or base64)
+    if (bouquet.image.startsWith('data:image')) {
+        uploadedImageData = bouquet.image;
+        document.getElementById('imagePreview').src = uploadedImageData;
+        document.getElementById('imagePreview').style.display = 'block';
+        document.getElementById('removeImageBtn').style.display = 'inline-block';
+        document.getElementById('imageUploadArea').style.display = 'none';
+    } else {
+        // If it's a URL, show it but user will need to re-upload if they want to change
+        uploadedImageData = bouquet.image;
+        document.getElementById('imagePreview').src = bouquet.image;
+        document.getElementById('imagePreview').style.display = 'block';
+        document.getElementById('imageUploadArea').style.display = 'block';
+    }
+    
+    document.getElementById('addBouquetModal').style.display = 'block';
+    
+    // Change save button to update
+    const saveBtn = document.querySelector('#addBouquetModal .btn-success');
+    saveBtn.textContent = 'Update Bouquet';
+    saveBtn.onclick = function() {
+        updateBouquet(bouquetId);
+    };
+}
+
+function updateBouquet(bouquetId) {
+    const bouquets = JSON.parse(localStorage.getItem('bouquetProducts') || '[]');
+    const index = bouquets.findIndex(b => b.id === bouquetId);
+    
+    if (index === -1) return;
+    
+    bouquets[index].name = document.getElementById('bouquetName').value.trim();
+    bouquets[index].price = parseInt(document.getElementById('bouquetPrice').value);
+    bouquets[index].description = document.getElementById('bouquetDesc').value.trim();
+    bouquets[index].category = document.getElementById('bouquetCategory').value;
+    bouquets[index].featured = document.getElementById('bouquetFeatured').value === 'true';
+    
+    // Only update image if a new one was uploaded
+    if (uploadedImageData && uploadedImageData !== bouquets[index].image) {
+        bouquets[index].image = uploadedImageData;
+    }
+    
+    localStorage.setItem('bouquetProducts', JSON.stringify(bouquets));
+    closeAddBouquetModal();
+    loadBouquetProducts();
+    alert('Bouquet updated successfully!');
+}
+
+function deleteBouquet(bouquetId) {
+    if (!confirm('Are you sure you want to delete this bouquet?')) return;
+    
+    let bouquets = JSON.parse(localStorage.getItem('bouquetProducts') || '[]');
+    bouquets = bouquets.filter(b => b.id !== bouquetId);
+    localStorage.setItem('bouquetProducts', JSON.stringify(bouquets));
+    
+    loadBouquetProducts();
+    alert('Bouquet deleted successfully!');
+}
+
+/* Photo viewer functions */
+function viewPhoto(imageSrc, itemName, orderId) {
+    const modal = document.getElementById('photoModal');
+    const img = document.getElementById('modalPhoto');
+    const info = document.getElementById('modalPhotoInfo');
+    
+    // Decode the image source
+    const decodedSrc = decodeURIComponent(imageSrc);
+    img.src = decodedSrc;
+    info.textContent = `${itemName} - Order #${orderId}`;
+    modal.style.display = 'flex';
+}
+
+function closePhotoModal() {
+    document.getElementById('photoModal').style.display = 'none';
+}
+
+function downloadCurrentPhoto() {
+    const img = document.getElementById('modalPhoto');
+    const link = document.createElement('a');
+    link.download = `soul-art-photo-${Date.now()}.jpg`;
+    link.href = img.src;
+    link.click();
+}
+
+/* Close modals when clicking outside */
+window.onclick = function(event) {
+    const addModal = document.getElementById('addBouquetModal');
+    const orderModal = document.getElementById('orderDetailsModal');
+    const photoModal = document.getElementById('photoModal');
+    
+    if (event.target === addModal) {
+        closeAddBouquetModal();
+    }
+    if (event.target === orderModal) {
+        closeOrderDetailsModal();
+    }
+    if (event.target === photoModal) {
+        closePhotoModal();
+    }
+};
+
+// Initialize
+fetchDatabaseOrders();
+loadProducts();
+</script>
+</body>
+</html>

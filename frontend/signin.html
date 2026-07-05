@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Login – Soul Art Studio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="auth.js"></script>
+<style>
+body{font-family:Arial;background:#f4f4f4;margin:0;padding:0}
+.box{max-width:400px;margin:40px auto;background:#fff;padding:20px;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+input{width:100%;padding:10px;margin-top:10px;border:1px solid #bbb;border-radius:6px}
+.btn{width:100%;padding:12px;background:#1e90ff;border:none;color:#fff;font-size:16px;border-radius:6px;margin-top:14px;cursor:pointer}
+.link{text-align:center;margin-top:12px}
+a{text-decoration:none;color:#1e90ff;font-weight:bold}
+.error{color:red;text-align:center;margin-top:10px;padding:10px;background:#ffebee;border-radius:6px}
+.success{color:green;text-align:center;margin-top:10px;padding:10px;background:#e8f5e8;border-radius:6px}
+.loading{color:#666;text-align:center;margin-top:10px}
+</style>
+</head>
+<body>
+
+<div class="box">
+<h2>Login</h2>
+
+<input id="email" type="email" placeholder="Email ID">
+<input id="pass" type="password" placeholder="Password">
+
+<button class="btn" onclick="login()">Login</button>
+
+<div id="message"></div>
+
+<div class="link"><a href="forgot-password.html">Forgot Password?</a></div>
+<div class="link">New user? <a href="signup.html">Create Account</a></div>
+</div>
+
+<script>
+// Check if already logged in
+if (Auth.isLoggedIn()) {
+    window.location.href = "index.html";
+}
+
+async function login(){
+    let email = document.getElementById("email").value.trim();
+    let password = document.getElementById("pass").value.trim();
+    const messageDiv = document.getElementById("message");
+
+    // Clear previous messages
+    messageDiv.innerHTML = '';
+
+    if (!email || !password) {
+        messageDiv.innerHTML = '<div class="error">Please enter both email and password!</div>';
+        return;
+    }
+
+    // Show loading
+    messageDiv.innerHTML = '<div class="loading">Logging in...</div>';
+
+    try {
+        // First try backend API
+        const response = await fetch('/api/signin', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Save token and user data using Auth utility
+            Auth.login(email, data.token, data.user);
+            
+            messageDiv.innerHTML = '<div class="success">Login successful! Redirecting...</div>';
+            setTimeout(() => {
+                window.location.href = "index.html";
+            }, 1000);
+        } else {
+            // If backend fails, check localStorage for demo users
+            const demoUsers = JSON.parse(localStorage.getItem('demoUsers') || '[]');
+            const demoUser = demoUsers.find(u => u.email === email && u.password === password);
+            
+            if (demoUser) {
+                // Demo login successful
+                const userData = { email: demoUser.email, name: demoUser.name || demoUser.email };
+                Auth.login(email, 'demo-token-' + Date.now(), userData);
+                
+                messageDiv.innerHTML = '<div class="success">Login successful! Redirecting...</div>';
+                setTimeout(() => {
+                    window.location.href = "index.html";
+                }, 1000);
+            } else {
+                messageDiv.innerHTML = `<div class="error">${data.error || "Invalid email or password!"}</div>`;
+            }
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        // Fallback to localStorage demo login
+        const demoUsers = JSON.parse(localStorage.getItem('demoUsers') || '[]');
+        const demoUser = demoUsers.find(u => u.email === email && u.password === password);
+        
+        if (demoUser) {
+            const userData = { email: demoUser.email, name: demoUser.name || demoUser.email };
+            Auth.login(email, 'demo-token-' + Date.now(), userData);
+            
+            messageDiv.innerHTML = '<div class="success">Login successful! Redirecting...</div>';
+            setTimeout(() => {
+                window.location.href = "index.html";
+            }, 1000);
+        } else {
+            // Check if it's a simple password for demo
+            if (password.length >= 3) {
+                // Create demo account if it doesn't exist
+                const userData = { email, name: email.split('@')[0] };
+                Auth.login(email, 'demo-token-' + Date.now(), userData);
+                
+                // Save to demo users
+                demoUsers.push({ email, password, name: email.split('@')[0] });
+                localStorage.setItem('demoUsers', JSON.stringify(demoUsers));
+                
+                messageDiv.innerHTML = '<div class="success">Account created and logged in! Redirecting...</div>';
+                setTimeout(() => {
+                    window.location.href = "index.html";
+                }, 1000);
+            } else {
+                messageDiv.innerHTML = '<div class="error">Network error. Please try again.</div>';
+            }
+        }
+    }
+}
+
+// Allow login on Enter key
+document.getElementById("pass").addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+        login();
+    }
+});
+
+// Auto-focus email field
+document.getElementById("email").focus();
+</script>
+
+</body>
+</html>
