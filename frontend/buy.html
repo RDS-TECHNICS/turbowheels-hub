@@ -73,13 +73,7 @@
       </div>
     </div>
 
-    <!-- WhatsApp Notification Field -->
-    <div class="whatsapp-field">
-      <label>📱 WhatsApp Number for Order Updates</label>
-      <input type="tel" id="whatsappNumber" placeholder="e.g., 9876543210" required/>
-      <small class="muted">We'll send order confirmation and updates to this WhatsApp number</small>
-    </div>
-
+    
     <div style="margin-top:12px">
       <label>Special Instructions</label>
       <textarea id="orderNotes" placeholder="Any special requests or notes..." rows="3"></textarea>
@@ -95,12 +89,7 @@
     <div id="errorMsg" class="error"></div>
     <div id="successMsg" class="success"></div>
 
-    <div style="margin-top:12px">
-      <button id="placeOrderBtn" class="btn">Place Order & Get WhatsApp Confirmation</button>
-      <a href="cart.html" class="btn" style="background:#666">Back to Cart</a>
-    </div>
-  </div>
-</div>
+   
 
 <script src="auth.js"></script>
 <script>
@@ -192,25 +181,7 @@ function updateTotals(){
   document.getElementById('totalAmt').textContent = (subtotal + deliveryCharge).toFixed(2);
 }
 
-// Auto-fill user data
-function prefillUserData() {
-  const user = Auth.getCurrentUser();
-  if (user) {
-    const whatsappInput = document.getElementById('whatsappNumber');
-    
-    if (user.whatsappNumber && user.whatsappNumber.trim() !== '') {
-      whatsappInput.value = user.whatsappNumber;
-    }
-    
-    if (user.name) {
-      document.getElementById('addrName').value = user.name;
-    }
-    
-    if (user.phone) {
-      document.getElementById('addrPhone').value = user.phone;
-    }
-  }
-}
+
 
 /* Place Order - Send to Backend API */
 async function placeOrder() {
@@ -236,19 +207,7 @@ async function placeOrder() {
     const deliveryCharge = 50; // Fixed delivery charge
     const total = subtotal + deliveryCharge;
     const notes = document.getElementById('orderNotes').value.trim();
-    const whatsappNumber = document.getElementById('whatsappNumber').value.trim();
-
-    // Validate WhatsApp number
-    if (!whatsappNumber) {
-      showError('Please enter your WhatsApp number for order updates');
-      return;
-    }
-
-    const cleanNumber = whatsappNumber.replace(/\D/g, '');
-    if (cleanNumber.length !== 10) {
-      showError('Please enter a valid 10-digit WhatsApp number');
-      return;
-    }
+   
 
     // Prepare order items
     const orderItems = items.map(item => {
@@ -322,7 +281,6 @@ async function placeOrder() {
       fulfill: fulfill,
       paymentMethod: paymentMethod,
       notes: notes,
-      whatsappNumber: cleanNumber,
       address: address
     };
 
@@ -360,7 +318,7 @@ async function placeOrder() {
 
     if (result.success) {
       showSuccess(`✅ Order placed successfully! Order ID: ${result.order.orderId}<br><br>
-                  📱 WhatsApp confirmation sent to ${cleanNumber}<br>
+
                   📧 Email confirmation sent to your registered email<br>
                   Check your orders page for details.`);
       
