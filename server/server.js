@@ -1549,9 +1549,20 @@ app.post('/api/cart/add', async (req, res) => {
     }
 const tokenEmail = (decoded.email || "").toLowerCase().trim();
 
+console.log("========== USER DEBUG ==========");
+console.log("Token email:", tokenEmail);
+console.log("Total users:", users.length);
+
+users.forEach((u, i) => {
+    console.log(`User ${i}:`, (u.email || "").toLowerCase().trim());
+});
+
 const userIndex = users.findIndex(
     u => (u.email || "").toLowerCase().trim() === tokenEmail
 );
+
+console.log("User index:", userIndex);
+console.log("================================");
 
 if (userIndex === -1) {
     console.log("❌ JWT Email :", tokenEmail);
