@@ -1655,6 +1655,15 @@ app.delete('/api/cart/remove/:itemId', async (req, res) => {
 // ========== ORDER ROUTES ==========
 
 // Create Order
+app.get("/api/debug-users", (req, res) => {
+    let users = [];
+
+    if (fs.existsSync(usersFile)) {
+        users = JSON.parse(fs.readFileSync(usersFile, "utf8"));
+    }
+
+    res.json(users);
+});
 app.post('/api/orders/create', async (req, res) => {
   try {
     console.log('\n📦 ========== ORDER CREATION STARTED ==========');
