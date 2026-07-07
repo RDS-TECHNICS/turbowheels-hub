@@ -23,7 +23,6 @@
   .loading{display:none;margin:10px 0;color:#666}
   .error{color:#ff4444;margin-top:10px}
   .success{color:#00aa00;margin-top:10px;font-weight:bold}
-  .whatsapp-field{margin-top:15px;padding:10px;background:#f8fff8;border-left:4px solid #25D366;border-radius:4px}
   .payment-note{background:#fff3cd;color:#856404;padding:8px;border-radius:5px;margin-top:5px;font-size:13px;border-left:4px solid #ffc107}
   .info-box{background:#e7f3ff;padding:10px;border-radius:5px;margin-bottom:15px;border-left:4px solid #1e90ff;}
 </style>
@@ -73,7 +72,8 @@
       </div>
     </div>
 
-    
+    <!-- WhatsApp Notification Field -->
+
     <div style="margin-top:12px">
       <label>Special Instructions</label>
       <textarea id="orderNotes" placeholder="Any special requests or notes..." rows="3"></textarea>
@@ -89,7 +89,12 @@
     <div id="errorMsg" class="error"></div>
     <div id="successMsg" class="success"></div>
 
-   
+    <div style="margin-top:12px">
+      <button id="placeOrderBtn" class="btn">Place Order & Get WhatsApp Confirmation</button>
+      <a href="cart.html" class="btn" style="background:#666">Back to Cart</a>
+    </div>
+  </div>
+</div>
 
 <script src="auth.js"></script>
 <script>
@@ -180,7 +185,6 @@ function updateTotals(){
   document.getElementById('deliveryCharge').textContent = deliveryCharge.toFixed(2);
   document.getElementById('totalAmt').textContent = (subtotal + deliveryCharge).toFixed(2);
 }
-
 
 
 /* Place Order - Send to Backend API */
@@ -281,6 +285,7 @@ async function placeOrder() {
       fulfill: fulfill,
       paymentMethod: paymentMethod,
       notes: notes,
+
       address: address
     };
 
@@ -318,7 +323,7 @@ async function placeOrder() {
 
     if (result.success) {
       showSuccess(`✅ Order placed successfully! Order ID: ${result.order.orderId}<br><br>
-
+                  
                   📧 Email confirmation sent to your registered email<br>
                   Check your orders page for details.`);
       
