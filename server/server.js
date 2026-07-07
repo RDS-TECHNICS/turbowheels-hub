@@ -84,42 +84,6 @@ if (!BREVO_API_KEY) {
 } else {
     console.log("✅ Brevo API Ready");
 }
-// ========== Send WhatsApp using CallMeBot ==========
-async function sendWhatsAppFromBusiness(toNumber, message, imageUrl = null) {
-
-    try {
-
-        let finalMessage = message;
-
-        // Add image link if available
-        if (imageUrl) {
-            finalMessage += "\n\n📷 Image:\n" + imageUrl;
-        }
-
-        const url =
-            `https://api.callmebot.com/whatsapp.php?phone=${process.env.CALLMEBOT_PHONE}&text=${encodeURIComponent(finalMessage)}&apikey=${process.env.CALLMEBOT_APIKEY}`;
-
-        await axios.get(url);
-
-        console.log("✅ WhatsApp sent successfully");
-
-        return {
-            success: true,
-            hasImage: imageUrl ? true : false
-        };
-
-    } catch (error) {
-
-        console.error("❌ WhatsApp Error:", error.message);
-
-        return {
-            success: false,
-            error: error.message
-        };
-
-    }
-
-}
 
 // ========== Send Email Function (Generic) ==========
 async function sendEmail(to, subject, html, text = '') {
@@ -171,7 +135,7 @@ async function sendEmail(to, subject, html, text = '') {
 // ========== Step 1 - Send OTP for Registration ==========
 app.post('/api/signup/send-otp', async (req, res) => {
   try {
-    const { email, password, name, phone, whatsappNumber } = req.body;
+    const { email, password, name, phone } = req.body;
 
     console.log('📝 Signup OTP request for:', email);
 
@@ -230,7 +194,6 @@ app.post('/api/signup/send-otp', async (req, res) => {
       password: await bcrypt.hash(password, 12),
       name: name || '',
       phone: phone || '',
-      whatsappNumber: whatsappNumber || '',
       otp,
       expires
     });
@@ -550,7 +513,6 @@ app.post('/api/signup/verify-otp', async (req, res) => {
       password: pendingUser.password,
       name: pendingUser.name,
       phone: pendingUser.phone,
-      whatsappNumber: pendingUser.whatsappNumber,
       cart: [],
       orders: [],
       isVerified: true
@@ -618,7 +580,6 @@ app.post('/api/signup/verify-otp', async (req, res) => {
         email: user.email,
         name: user.name,
         phone: user.phone,
-        whatsappNumber: user.whatsappNumber,
         isVerified: true
       },
       message: 'Registration successful! Welcome to Soul Art Studio.'
@@ -891,7 +852,6 @@ app.post('/api/signin', async (req, res) => {
         email: user.email,
         name: user.name,
         phone: user.phone,
-        whatsappNumber: user.whatsappNumber,
         isVerified: user.isVerified
       }
     });
@@ -1587,16 +1547,23 @@ app.post('/api/cart/add', async (req, res) => {
     if (fs.existsSync(usersFile)) {
       users = JSON.parse(fs.readFileSync(usersFile, "utf8"));
     }
+const tokenEmail = (decoded.email || "").toLowerCase().trim();
 
-    const userIndex = users.findIndex(
-      u => u.email === decoded.email
-    );
+const userIndex = users.findIndex(
+    u => (u.email || "").toLowerCase().trim() === tokenEmail
+);
 
-    if (userIndex === -1) {
-      return res.status(404).json({ error: "User not found" });
-    }
+if (userIndex === -1) {
+    console.log("❌ JWT Email :", tokenEmail);
+    console.log("📄 Users :", users.map(u => u.email));
 
-    const user = users[userIndex];
+    return res.status(400).json({
+        success: false,
+        error: "User not found"
+    });
+}
+
+const user = users[userIndex];
     
     // Initialize cart if it doesn't exist
     if (!user.cart) {
@@ -1641,7 +1608,7 @@ app.delete('/api/cart/remove/:itemId', async (req, res) => {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    let users = [];
+  
     if (fs.existsSync(usersFile)) {
       users = JSON.parse(fs.readFileSync(usersFile, "utf8"));
     }
@@ -1705,7 +1672,7 @@ app.post('/api/orders/create', async (req, res) => {
 
     const user = users[userIndex];
     
-    const { items, subtotal, deliveryCharge, total, fulfill, paymentMethod, address, notes, whatsappNumber } = req.body;
+    const { items, subtotal, deliveryCharge, total, fulfill, paymentMethod, address, notes } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
@@ -1721,12 +1688,11 @@ app.post('/api/orders/create', async (req, res) => {
       });
     }
 
-    const finalWhatsappNumber = whatsappNumber || user.whatsappNumber;
     const orderId = `ORD-${Date.now()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
 
     console.log('👤 Customer:', user.email, 'Verified:', user.isVerified);
-    console.log('📱 WhatsApp:', finalWhatsappNumber || 'Not provided');
     console.log('💰 Total: ₹', total);
+    console.log("Decoded JWT:", decoded);
 
     let itemsArray = items;
     if (typeof itemsArray === 'string') {
@@ -1798,7 +1764,6 @@ app.post('/api/orders/create', async (req, res) => {
     const orderData = {
       orderId,
       userEmail: user.email,
-      whatsappNumber: finalWhatsappNumber,
       items: orderItems,
       subtotal: parseFloat(subtotal) || 0,
       deliveryCharge: parseFloat(deliveryCharge) || 0,
@@ -1809,8 +1774,6 @@ app.post('/api/orders/create', async (req, res) => {
       notes: notes || '',
       status: 'Placed',
       hiddenFromAdmin: false,
-      whatsappSent: false,
-      whatsappHasImage: false,
       emailSent: false,
       createdAt: new Date()
     };
@@ -1854,6 +1817,23 @@ app.post('/api/orders/create', async (req, res) => {
 
     console.log('👤 User updated in users.json');
 
+    // Send admin WhatsApp notification
+    const adminMessage = `
+🛒 NEW ORDER RECEIVED!
+
+Order ID: ${orderId}
+Customer: ${user.name || user.email}
+Phone: ${user.phone || 'Not provided'}
+Amount: ₹${total}
+Items: ${orderItems.length} items
+Payment: ${paymentMethod || 'UPI'}
+Fulfillment: ${fulfill || 'Pickup'}
+
+📦 View orders in admin panel.`;
+
+    await sendWhatsAppMessage(adminMessage);
+    console.log('📱 Admin WhatsApp notification sent');
+
     const emailSent = await sendEmail(
       user.email,
       `🎨 Order Confirmation #${orderId} - Soul Art Studio`,
@@ -1889,17 +1869,15 @@ app.post('/api/orders/create', async (req, res) => {
 
     console.log('✅ ========== ORDER CREATION COMPLETED ==========\n');
     
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       order: {
         orderId,
         total: orderData.total,
         status: 'Placed',
-        emailSent,
-        whatsappSent: whatsappResult.success,
-        whatsappHasImage: whatsappResult.hasImage
+        emailSent
       },
-      message: 'Order placed successfully! Check your email and WhatsApp.'
+      message: 'Order placed successfully! Check your email for confirmation.'
     });
 
   } catch (error) {
@@ -2404,7 +2382,6 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
       email: user.email,
       name: user.name,
       phone: user.phone,
-      whatsappNumber: user.whatsappNumber,
       orders: user.orders || [],
       createdAt: user.createdAt || new Date()
     }));
